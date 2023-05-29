@@ -10,7 +10,7 @@ public class WikiBuilding {
 	// Size 3x4 considered as 3 height and 4 width.
 	private int height;
 	private int width;
-	private String set = "-";
+	private String set = "";
 	private int coins24;
 	private int gemsMin24;
 	private int gemsMax24;
@@ -41,7 +41,7 @@ public class WikiBuilding {
 	private String specialProduction = "";
 	// Not reliable. Some buildings can be upgraded with special kit, which is not
 	// listed on the buildings page. But if it's set to true, its probably true.
-	 private boolean upgradeable = false;
+	private boolean upgradeable = false;
 	// Some productions need to be motivated. But not all, which makes it hard to
 	// factor in and display correctly. So just assume everything is motivated
 	// anyways.
@@ -88,12 +88,12 @@ public class WikiBuilding {
 		this.specialProduction = toClone.specialProduction;
 		this.upgradeable = toClone.upgradeable;
 	}
-	
+
 	public WikiBuilding(WikiBuilding toClone, String appendName) {
 		this(toClone);
 		this.name = name + appendName;
 	}
-	
+
 	public String getName() {
 		return name;
 	}
@@ -342,12 +342,19 @@ public class WikiBuilding {
 		this.specialProduction = specialProduction;
 	}
 
+	/**
+	 * Append the special production by the given string. If the string is already
+	 * present, do nothing. Will put delimiter between appends.
+	 * 
+	 * @param append String to append.
+	 */
 	public void appendSpecialProduction(String append) {
 		if (this.specialProduction == null || this.specialProduction.isEmpty()) {
 			this.specialProduction = append;
-		} else {
+		} else if (!this.specialProduction.contains(append)) {
 			this.specialProduction = this.specialProduction + ";" + append;
 		}
+
 	}
 
 	public boolean isUpgradeable() {
@@ -363,8 +370,9 @@ public class WikiBuilding {
 		return name + "|" + type + "|" + street + "|" + height + "|" + width + "|" + set + "|" + coins24 + "|"
 				+ gemsMin24 + "|" + gemsMax24 + "|" + needsStarting + "|" + happiness + "|" + population + "|"
 				+ attackerAttack + "|" + attackerDefense + "|" + defenderAttack + "|" + defenderDefense + "|" + ranking
-				+ "|" + moneyPercent + "|" + suppliesPercent + "|" + money + "|" + supplies + "|" + guildPower + "|" + medals + "|" + goods + "|" + guildGoods
-				+ "|" + blueprints + "|" + diamonds + "|" + forgePoints + "|" + units + "|" + specialProduction + "|" + upgradeable;
+				+ "|" + moneyPercent + "|" + suppliesPercent + "|" + money + "|" + supplies + "|" + guildPower + "|"
+				+ medals + "|" + goods + "|" + guildGoods + "|" + blueprints + "|" + diamonds + "|" + forgePoints + "|"
+				+ units + "|" + specialProduction + "|" + upgradeable;
 	}
 
 	// TODO: Non-24 hour productions.

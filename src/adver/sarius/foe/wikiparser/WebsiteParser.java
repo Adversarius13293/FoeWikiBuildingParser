@@ -41,7 +41,11 @@ public class WebsiteParser {
 	 */
 	private static boolean requiresPopulation = false;
 
+	// TODO: Parse limited buildings page. Maybe even military buildings?
+	// TODO: Some hard coded buildings? Like Siedlung and GEX buildings? Fountain probabilities?
+	// TODO: Remove WENN from formula, if every age produces the same?
 	public static void main(String[] args) {
+		var building = new WikiBuilding();
 		try {
 			// Fetch the HTML content of the web site.
 			String url = "https://de.wiki.forgeofempires.com/index.php?title=Liste_besonderer_Geb%C3%A4ude";
@@ -56,10 +60,11 @@ public class WebsiteParser {
 			String[] rows = tableHtml.split("<tr>");
 
 			List<WikiBuilding> allBuildings = new ArrayList<>();
-			
+
+			// Over 700 buildings in the table.
 			// Iterate over each row, with one building per row.
 			// Skipping the first row which contains headers.
-            for (int i = 2; i < rows.length; i++) {
+			for (int i = 2; i < rows.length; i++) {
 //			for (int i = 2; i < 5; i++) {
 				String row = rows[i];
 
@@ -86,7 +91,7 @@ public class WebsiteParser {
 				// Some buildings have different production based on set members. Create one
 				// instance for each, which means multiple entries for one page.
 				List<WikiBuilding> buildings = new ArrayList<>();
-				var building = new WikiBuilding();
+				building = new WikiBuilding();
 				building.setName(buildingName);
 				buildings.add(building);
 
@@ -213,8 +218,7 @@ public class WebsiteParser {
 										if (!setProduction.containsValue(parseInt(cleanedCell))) {
 											// Assuming the first building is always without any sets.
 											// BuildingName [2 x Set]
-											buildings.add(
-													new WikiBuilding(building, " [" + cleanedCell + " Set]"));
+											buildings.add(new WikiBuilding(building, " [" + cleanedCell + " Set]"));
 										}
 										// Assuming there are no 0x header entries.
 										setProduction.put(spanningCol, parseInt(cleanedCell));
@@ -223,24 +227,19 @@ public class WebsiteParser {
 										multFactor.put(spanningCol,
 												multFactor.get(spanningCol) * (parseInt(cleanedCell) / 100.));
 										// TODO: Maybe not needed, and already covered by text heading later on?
-										buildings.forEach(b -> {
-											if (!b.getSpecialProduction().contains("Zufallsproduktion!")) {
-												b.appendSpecialProduction("Einberechnete Zufallsproduktion!");
-											}
-										});
+										buildings.forEach(
+												b -> b.appendSpecialProduction("Einberechnete Zufallsproduktion!"));
 									} else if (cleanedCell.matches("[0-9]+ Min.")) {
 										// Different production times. Scale up to 24 hours.
 										double factor = 60. / parseInt(cleanedCell) * 24;
 										multFactor.put(spanningCol, multFactor.get(spanningCol) * factor);
 
-										buildings.forEach(b -> {
-											if (!b.getSpecialProduction()
-													.contains("Produktion auf 24 Stunden gerechnet!")) {
-												b.appendSpecialProduction("Produktion auf 24 Stunden gerechnet!");
-											}
-										});
+										buildings.forEach(
+												b -> b.appendSpecialProduction("Produktion auf 24 Stunden gerechnet!"));
 
-										// TODO: Somehow mark or handle production buildings
+										// TODO: Somehow mark or handle production buildings.
+										// Some buildings produce only supplies. Adding them is wrong, and even too long
+										// of a string.
 //										if (buildings.stream().anyMatch(b -> !"Produktionsstätten".equals(b.getType())
 //												&& !"Zikkurat".equals(b.getName()) && !"Strohhütte".equals(b.getName())
 //												&& !"Schrein der Inspiration".equals(b.getName())
@@ -256,22 +255,14 @@ public class WebsiteParser {
 									} else if (cleanedCell.matches("[0-9]+ Std.")) {
 										double factor = 24. / parseInt(cleanedCell);
 										multFactor.put(spanningCol, multFactor.get(spanningCol) * factor);
-										buildings.forEach(b -> {
-											if (!b.getSpecialProduction()
-													.contains("Produktion auf 24 Stunden gerechnet!")) {
-												b.appendSpecialProduction("Produktion auf 24 Stunden gerechnet!");
-											}
-										});
+										buildings.forEach(
+												b -> b.appendSpecialProduction("Produktion auf 24 Stunden gerechnet!"));
 									} else if (cleanedCell.matches("[0-9]+ T.")) {
 										double factor = 1. / parseInt(cleanedCell);
 										multFactor.put(spanningCol, multFactor.get(spanningCol) * factor);
 										if (!"1 T.".equals(cleanedCell)) {
-											buildings.forEach(b -> {
-												if (!b.getSpecialProduction()
-														.contains("Produktion auf 24 Stunden gerechnet!")) {
-													b.appendSpecialProduction("Produktion auf 24 Stunden gerechnet!");
-												}
-											});
+											buildings.forEach(b -> b
+													.appendSpecialProduction("Produktion auf 24 Stunden gerechnet!"));
 										}
 									} else if (cell.contains("<img ")) {
 										// Normal header processing for actual products instead of structure.
@@ -309,18 +300,18 @@ public class WebsiteParser {
 											break;
 										case "Benötigt":
 											// Assuming keyword is only for population.
-											System.out.println("Assuming building requires population: "
-													+ buildings.get(0).getName());
+											if (!"Produktionsstätten".equals(building.getType())
+													&& !"Militärgebäude".equals(building.getType())) {
+												System.out.println(
+														"Assuming building requires population, but it has an unexpected type: "
+																+ building.getName());
+											}
 											requiresPopulation = true;
 											// TODO: Maybe save in additional list, and apply this to the corresponding
 											// column?
 											break;
 										case "Folgendes wird zufällig produziert:":
-											buildings.forEach(b -> {
-												if (!b.getSpecialProduction().contains("Zufallsproduktion!")) {
-													b.appendSpecialProduction("Zufallsproduktion!");
-												}
-											});
+											buildings.forEach(b -> b.appendSpecialProduction("Zufallsproduktion!"));
 											break;
 										case "wenn motiviert":
 										case "Liefert":
@@ -366,13 +357,16 @@ public class WebsiteParser {
 				}
 
 				// For easier debugging. Output each building when processed, include its row.
-//				final int temp = i;
-//				buildings.forEach(b -> System.out.println(temp + ": " + b.toString()));
+				final int temp = i;
+				buildings.forEach(b -> System.out.println(temp + ": " + b.toString()));
 				allBuildings.addAll(buildings);
 			}
 			System.out.println("Done");
-			outputBuildings(allBuildings);
-		} catch (IOException e) {
+			// No real need to filter out buildings? Can just do that in the document
+			// itself.
+//			outputBuildings(allBuildings);
+		} catch (Exception e) {
+			System.out.println("Exception with building: " + building.getName());
 			e.printStackTrace();
 		}
 	}
@@ -489,9 +483,10 @@ public class WebsiteParser {
 			if (requiresPopulation) {
 				buildings.forEach(b -> b
 						.setPopulation(buildFormulaString(lastAge, b.getPopulation(), parseInt("-" + data), factor)));
+			} else {
+				buildings.forEach(
+						b -> b.setPopulation(buildFormulaString(lastAge, b.getPopulation(), parseInt(data), factor)));
 			}
-			buildings.forEach(
-					b -> b.setPopulation(buildFormulaString(lastAge, b.getPopulation(), parseInt(data), factor)));
 			break;
 		case "rank":
 			buildings.forEach(b -> b.setRanking(buildFormulaString(lastAge, b.getRanking(), parseInt(data), factor)));
@@ -571,18 +566,21 @@ public class WebsiteParser {
 		case "armyuniticons_90x90_rogue":
 			// Assuming the age can be ignored here.
 			// TODO: Get unit name from parsed page for all the specials?
-			buildings.forEach(b -> b.appendSpecialProduction(parseInt(data) * factor + "x Agent"));
+			buildings
+					.forEach(b -> b.appendSpecialProduction(converDoubleToString(parseInt(data) * factor) + "x Agent"));
 			break;
 		case "armyuniticons_90x90_color_guard":
 			// Assuming the age can be ignored here.
-			buildings.forEach(b -> b.appendSpecialProduction(parseInt(data) * factor + "x Fahnenwache"));
+			buildings.forEach(
+					b -> b.appendSpecialProduction(converDoubleToString(parseInt(data) * factor) + "x Fahnenwache"));
 			break;
 		case "armyuniticons_90x90_SpaceAgeJupiterMoon_champion":
 			// Assuming the age can be ignored here.
-			buildings.forEach(b -> b.appendSpecialProduction(parseInt(data) * factor + "x Held"));
+			buildings.forEach(b -> b.appendSpecialProduction(converDoubleToString(parseInt(data) * factor) + "x Held"));
 		case "armyuniticons_90x90_military_drummer":
 			// Assuming the age can be ignored here.
-			buildings.forEach(b -> b.appendSpecialProduction(parseInt(data) * factor + "x Trommler"));
+			buildings.forEach(
+					b -> b.appendSpecialProduction(converDoubleToString(parseInt(data) * factor) + "x Trommler"));
 			break;
 		default:
 			throw new IllegalArgumentException("Unexpected type: " + dataType);
