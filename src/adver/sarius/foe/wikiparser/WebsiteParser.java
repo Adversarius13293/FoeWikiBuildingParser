@@ -5,11 +5,15 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.URL;
 import java.net.URLConnection;
+import java.text.DecimalFormat;
+import java.text.DecimalFormatSymbols;
+import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Random;
 import java.util.Set;
@@ -36,7 +40,7 @@ public class WebsiteParser {
 			// Iterate over each row, with one building per row.
 			// Skipping the first row which contains headers.
 //            for (int i = 2; i < rows.length; i++) {
-			for (int i = 25; i < 50; i++) {
+			for (int i = 80; i < 99; i++) {
 				String row = rows[i];
 
 				// Extract the building sub page
@@ -330,7 +334,7 @@ public class WebsiteParser {
 						for (c = 1; c < productionCells.length; c++) {
 							String cell = cleanHtmlSplit(productionCells[c]);
 //							System.out.println(headings.get(c - 1) + ": " + cell);
-							addProductionToBuildings(buildings, headings.get(c), cell);
+							addProductionToBuildings(buildings, headings.get(c), cell, multFactor.get(c));
 						}
 						if ((headings.size()) != c) {
 							System.out.println("Missmatch of headings to production content!");
@@ -390,7 +394,8 @@ public class WebsiteParser {
 
 	private static String lastAge;
 
-	private static void addProductionToBuildings(List<WikiBuilding> buildings, String dataType, String data) {
+	private static void addProductionToBuildings(List<WikiBuilding> buildings, String dataType, String data,
+			double factor) {
 		switch (dataType) {
 		case "Zeitalter":
 			// Remember last age, and assume all following calls are for that age.
@@ -398,103 +403,109 @@ public class WebsiteParser {
 			break;
 		case "happiness":
 		case "happiness_amount":
-			buildings.forEach(b -> b.setHappiness(buildFormulaString(lastAge, b.getHappiness(), parseInt(data))));
+			buildings.forEach(
+					b -> b.setHappiness(buildFormulaString(lastAge, b.getHappiness(), parseInt(data), factor)));
 			break;
 		case "population":
 			if (requiresPopulation) {
-				buildings.forEach(
-						b -> b.setPopulation(buildFormulaString(lastAge, b.getPopulation(), parseInt("-" + data))));
-			} else {
-				buildings.forEach(b -> b.setPopulation(buildFormulaString(lastAge, b.getPopulation(), parseInt(data))));
+				buildings.forEach(b -> b
+						.setPopulation(buildFormulaString(lastAge, b.getPopulation(), parseInt("-" + data), factor)));
 			}
+			buildings.forEach(
+					b -> b.setPopulation(buildFormulaString(lastAge, b.getPopulation(), parseInt(data), factor)));
 			break;
 		case "rank":
-			buildings.forEach(b -> b.setRanking(buildFormulaString(lastAge, b.getRanking(), parseInt(data))));
+			buildings.forEach(b -> b.setRanking(buildFormulaString(lastAge, b.getRanking(), parseInt(data), factor)));
 			break;
 		case "def_boost_attacker":
-			buildings.forEach(
-					b -> b.setAttackerDefense(buildFormulaString(lastAge, b.getAttackerDefense(), parseInt(data))));
+			buildings.forEach(b -> b
+					.setAttackerDefense(buildFormulaString(lastAge, b.getAttackerDefense(), parseInt(data), factor)));
 			break;
 		case "att_boost_attacker":
-			buildings.forEach(
-					b -> b.setAttackerAttack(buildFormulaString(lastAge, b.getAttackerAttack(), parseInt(data))));
+			buildings.forEach(b -> b
+					.setAttackerAttack(buildFormulaString(lastAge, b.getAttackerAttack(), parseInt(data), factor)));
 			break;
 		case "att_def_boost_attacker":
 			buildings.forEach(b -> {
-				b.setAttackerAttack(buildFormulaString(lastAge, b.getAttackerAttack(), parseInt(data)));
-				b.setAttackerDefense(buildFormulaString(lastAge, b.getAttackerDefense(), parseInt(data)));
+				b.setAttackerAttack(buildFormulaString(lastAge, b.getAttackerAttack(), parseInt(data), factor));
+				b.setAttackerDefense(buildFormulaString(lastAge, b.getAttackerDefense(), parseInt(data), factor));
 			});
 			break;
 		case "def_boost_defender":
-			buildings.forEach(
-					b -> b.setDefenderDefense(buildFormulaString(lastAge, b.getDefenderDefense(), parseInt(data))));
+			buildings.forEach(b -> b
+					.setDefenderDefense(buildFormulaString(lastAge, b.getDefenderDefense(), parseInt(data), factor)));
 			break;
 		case "att_boost_defender":
-			buildings.forEach(
-					b -> b.setDefenderAttack(buildFormulaString(lastAge, b.getDefenderAttack(), parseInt(data))));
+			buildings.forEach(b -> b
+					.setDefenderAttack(buildFormulaString(lastAge, b.getDefenderAttack(), parseInt(data), factor)));
 			break;
 		case "att_def_boost_defender":
 			buildings.forEach(b -> {
-				b.setDefenderAttack(buildFormulaString(lastAge, b.getDefenderAttack(), parseInt(data)));
-				b.setDefenderDefense(buildFormulaString(lastAge, b.getDefenderDefense(), parseInt(data)));
+				b.setDefenderAttack(buildFormulaString(lastAge, b.getDefenderAttack(), parseInt(data), factor));
+				b.setDefenderDefense(buildFormulaString(lastAge, b.getDefenderDefense(), parseInt(data), factor));
 			});
 		case "coin_production":
-			buildings.forEach(b -> b.setMoneyPercent(buildFormulaString(lastAge, b.getMoneyPercent(), parseInt(data))));
+			buildings.forEach(
+					b -> b.setMoneyPercent(buildFormulaString(lastAge, b.getMoneyPercent(), parseInt(data), factor)));
 			break;
 		case "supply_production":
-			buildings.forEach(
-					b -> b.setSuppliesPercent(buildFormulaString(lastAge, b.getSuppliesPercent(), parseInt(data))));
+			buildings.forEach(b -> b
+					.setSuppliesPercent(buildFormulaString(lastAge, b.getSuppliesPercent(), parseInt(data), factor)));
 			break;
 		case "money":
-			buildings.forEach(b -> b.setMoney(buildFormulaString(lastAge, b.getMoney(), parseInt(data))));
+			buildings.forEach(b -> b.setMoney(buildFormulaString(lastAge, b.getMoney(), parseInt(data), factor)));
 			break;
 		case "supplies":
-			buildings.forEach(b -> b.setSupplies(buildFormulaString(lastAge, b.getSupplies(), parseInt(data))));
+			buildings.forEach(b -> b.setSupplies(buildFormulaString(lastAge, b.getSupplies(), parseInt(data), factor)));
 			break;
 		case "clan_power":
-			buildings.forEach(b -> b.setGuildPower(buildFormulaString(lastAge, b.getGuildPower(), parseInt(data))));
+			buildings.forEach(
+					b -> b.setGuildPower(buildFormulaString(lastAge, b.getGuildPower(), parseInt(data), factor)));
 			break;
 		case "medals":
-			buildings.forEach(b -> b.setMedals(buildFormulaString(lastAge, b.getMedals(), parseInt(data))));
+			buildings.forEach(b -> b.setMedals(buildFormulaString(lastAge, b.getMedals(), parseInt(data), factor)));
 			break;
 		case "blueprint":
-			buildings.forEach(b -> b.setBlueprints(buildFormulaString(lastAge, b.getBlueprints(), parseInt(data))));
+			buildings.forEach(
+					b -> b.setBlueprints(buildFormulaString(lastAge, b.getBlueprints(), parseInt(data), factor)));
 			break;
 		case "premium":
-			buildings.forEach(b -> b.setDiamonds(buildFormulaString(lastAge, b.getDiamonds(), parseInt(data))));
+			buildings.forEach(b -> b.setDiamonds(buildFormulaString(lastAge, b.getDiamonds(), parseInt(data), factor)));
 			break;
 		case "goods":
 		case "all_goods_of_age":
 		case "random_good_of_age":
-			buildings.forEach(b -> b.setGoods(buildFormulaString(lastAge, b.getGoods(), parseInt(data))));
+			buildings.forEach(b -> b.setGoods(buildFormulaString(lastAge, b.getGoods(), parseInt(data), factor)));
 			break;
 		case "icon_great_building_bonus_guild_goods":
-			buildings.forEach(b -> b.setGuildGoods(buildFormulaString(lastAge, b.getGuildGoods(), parseInt(data))));
+			buildings.forEach(
+					b -> b.setGuildGoods(buildFormulaString(lastAge, b.getGuildGoods(), parseInt(data), factor)));
 			break;
 		case "strategy_points":
-			buildings.forEach(b -> b.setForgePoints(buildFormulaString(lastAge, b.getForgePoints(), parseInt(data))));
+			buildings.forEach(
+					b -> b.setForgePoints(buildFormulaString(lastAge, b.getForgePoints(), parseInt(data), factor)));
 			break;
 		case "military":
-			buildings.forEach(b -> b.setUnits(buildFormulaString(lastAge, b.getUnits(), parseInt(data))));
+			buildings.forEach(b -> b.setUnits(buildFormulaString(lastAge, b.getUnits(), parseInt(data), factor)));
 			break;
 		case "armyuniticons_90x90_rogue":
 			// Special currently ignores age.
 			// TODO: Get unit name from parsed page?
-			buildings.forEach(b -> b.appendSpecialProduction(parseInt(data) + "x Agent"));
+			buildings.forEach(b -> b.appendSpecialProduction(parseInt(data) * factor + "x Agent"));
 			break;
 		case "armyuniticons_90x90_color_guard":
 			// Special currently ignores age.
 			// TODO: Get unit name from parsed page?
-			buildings.forEach(b -> b.appendSpecialProduction(parseInt(data) + "x Fahnenwache"));
+			buildings.forEach(b -> b.appendSpecialProduction(parseInt(data) * factor + "x Fahnenwache"));
 			break;
 		case "armyuniticons_90x90_SpaceAgeJupiterMoon_champion":
 			// Special currently ignores age.
 			// TODO: Get unit name from parsed page?
-			buildings.forEach(b -> b.appendSpecialProduction(parseInt(data) + "x Held"));
+			buildings.forEach(b -> b.appendSpecialProduction(parseInt(data) * factor + "x Held"));
 		case "armyuniticons_90x90_military_drummer":
 			// Special currently ignores age.
 			// TODO: Get unit name from parsed page?
-			buildings.forEach(b -> b.appendSpecialProduction(parseInt(data) + "x Trommler"));
+			buildings.forEach(b -> b.appendSpecialProduction(parseInt(data) * factor + "x Trommler"));
 			break;
 		default:
 			throw new IllegalArgumentException("Unexpected type: " + dataType);
@@ -505,16 +516,21 @@ public class WebsiteParser {
 	private static final String compareAgeTo = "$B$26";
 
 //	private static final String compareAgeTo = "$Z$1";
-	private static String buildFormulaString(String age, String currentFormula, double ageValue) {
+	private static String buildFormulaString(String age, String currentFormula, double ageValue, double factor) {
 		if (currentFormula == null || currentFormula.isEmpty()) {
 			currentFormula = "=\"ERROR\"";
+		}
+		String valueString = converDoubleToString(ageValue);
+		String factorString = "";
+		if(factor != 1) {
+			factorString = "*"+converDoubleToString(factor);
 		}
 		// TODO: Change here for possibly other formats like excel or google docs.
 		// Current format: For german open office calc.
 		if (age.equals("undefined")) {
 			// Some buildings have only one line of production, without any age.
 			if (currentFormula.equals("=\"ERROR\"")) {
-				return "=" + ageValue;
+				return "=" + valueString + factorString;
 			} else {
 				throw new IllegalArgumentException(
 						"Got no age, but the formula is already filled: " + age + currentFormula);
@@ -522,12 +538,23 @@ public class WebsiteParser {
 		} else if (currentFormula.contains(age)) {
 			// Entry already exists. But some buildings produce different sets of goods or
 			// forge points, so add all together.
-			return currentFormula.replace("\"" + age + "\";", "\"" + age + "\";" + ageValue + "+");
+			return currentFormula.replace("\"" + age + "\";",
+					"\"" + age + "\";" + valueString + factorString + "+");
 		} else {
 			return currentFormula.replace("\"ERROR\"",
-					"WENN(" + compareAgeTo + "=\"" + age + "\";" + ageValue + ";\"ERROR\")");
+					"WENN(" + compareAgeTo + "=\"" + age + "\";" + valueString + factorString + ";\"ERROR\")");
 		}
 
+	}
+
+	private static String converDoubleToString(double number) {
+		DecimalFormatSymbols symbols = new DecimalFormatSymbols(Locale.GERMAN);
+        symbols.setDecimalSeparator(',');
+        symbols.setGroupingSeparator('\0'); // Disable thousands separator
+        
+        DecimalFormat decimalFormat = new DecimalFormat("0.########", symbols);
+        
+        return decimalFormat.format(number);
 	}
 
 	private static void addPropertiesToBuildings(List<WikiBuilding> buildings, String dataType, String data) {
