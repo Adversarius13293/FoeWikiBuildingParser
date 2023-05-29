@@ -1,7 +1,7 @@
 package adver.sarius.foe.building;
 
 public enum Street {
-	STREET_1("1x1"), STREET_2("2x2"), NO_STREET("Keine Straße benötigt");
+	STREET_1("1x1"), STREET_2("2x2"), NO_STREET("Keine Straße benötigt"), UNDEFINED("Nicht definiert, wahrscheinlich 1x1");
 
 	private String displayName;
 
