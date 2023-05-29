@@ -53,6 +53,49 @@ public class WikiBuilding {
 	// buildings only produce stuff when motivated, which blocks plundering, it's
 	// not really accurate.
 
+	public WikiBuilding() {
+		super();
+	}
+
+	public WikiBuilding(WikiBuilding toClone) {
+		this.name = toClone.name;
+		this.type = toClone.type;
+		this.street = toClone.street;
+		this.buildTime = toClone.buildTime;
+		this.height = toClone.height;
+		this.width = toClone.width;
+		this.set = toClone.set;
+		this.coins24 = toClone.coins24;
+		this.gemsMin24 = toClone.gemsMin24;
+		this.gemsMax24 = toClone.gemsMax24;
+		this.needsStarting = toClone.needsStarting;
+		this.happiness = toClone.happiness;
+		this.population = toClone.population;
+		this.attackerAttack = toClone.attackerAttack;
+		this.attackerDefense = toClone.attackerDefense;
+		this.defenderAttack = toClone.defenderAttack;
+		this.defenderDefense = toClone.defenderDefense;
+		this.ranking = toClone.ranking;
+		this.moneyPercent = toClone.moneyPercent;
+		this.suppliesPercent = toClone.suppliesPercent;
+		this.money = toClone.money;
+		this.supplies = toClone.supplies;
+		this.guildPower = toClone.guildPower;
+		this.medals = toClone.medals;
+		this.goods = toClone.goods;
+		this.guildGoods = toClone.guildGoods;
+		this.blueprints = toClone.blueprints;
+		this.diamonds = toClone.diamonds;
+		this.forgePoints = toClone.forgePoints;
+		this.units = toClone.units;
+		this.specialProduction = toClone.specialProduction;
+	}
+	
+	public WikiBuilding(WikiBuilding toClone, String appendName) {
+		this(toClone);
+		this.name = name + appendName;
+	}
+	
 	public String getName() {
 		return name;
 	}
