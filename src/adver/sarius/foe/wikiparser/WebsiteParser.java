@@ -55,9 +55,7 @@ public class WebsiteParser {
 			String tableHtml = htmlContent.substring(tableStartIndex, tableEndIndex + tableEndTag.length());
 			String[] rows = tableHtml.split("<tr>");
 
-			// Some buildings have different production based on set members. Create one
-			// instance for each, which means multiple entries for one page.
-			List<WikiBuilding> buildings = new ArrayList<>();
+			List<WikiBuilding> allBuildings = new ArrayList<>();
 			
 			// Iterate over each row, with one building per row.
 			// Skipping the first row which contains headers.
@@ -85,9 +83,12 @@ public class WebsiteParser {
 						buildingTableEndIndex + tableEndTag.length());
 				String[] buildingRows = buildingTableHtml.split("<tr>");
 
+				// Some buildings have different production based on set members. Create one
+				// instance for each, which means multiple entries for one page.
+				List<WikiBuilding> buildings = new ArrayList<>();
 				var building = new WikiBuilding();
-				buildings.add(building);
 				building.setName(buildingName);
+				buildings.add(building);
 
 				String lastHeading = null;
 				requiresPopulation = false;
@@ -213,7 +214,7 @@ public class WebsiteParser {
 											// Assuming the first building is always without any sets.
 											// BuildingName [2 x Set]
 											buildings.add(
-													new WikiBuilding(buildings.get(0), " [" + cleanedCell + " Set]"));
+													new WikiBuilding(building, " [" + cleanedCell + " Set]"));
 										}
 										// Assuming there are no 0x header entries.
 										setProduction.put(spanningCol, parseInt(cleanedCell));
@@ -367,9 +368,10 @@ public class WebsiteParser {
 				// For easier debugging. Output each building when processed, include its row.
 //				final int temp = i;
 //				buildings.forEach(b -> System.out.println(temp + ": " + b.toString()));
+				allBuildings.addAll(buildings);
 			}
 			System.out.println("Done");
-			outputBuildings(buildings);
+			outputBuildings(allBuildings);
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
