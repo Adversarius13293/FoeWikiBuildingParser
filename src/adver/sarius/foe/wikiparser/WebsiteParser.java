@@ -25,9 +25,25 @@ import adver.sarius.foe.building.WikiBuilding;
 
 public class WebsiteParser {
 
+	// Used in formula to compare the age against.
+	/** Used in the formulas to compare the age string against. */
+//	private static final String compareAgeTo = "$Z$1";
+	private static final String compareAgeTo = "$B$26";
+
+	/** Random object, currently used for the random waiting time. */
+	private static final Random random = new Random();
+
+	/** Internal helper variable to remember the last known age for production. */
+	private static String lastAge;
+	/**
+	 * Internal helper variable to remember, if the current building requires
+	 * instead of provides population.
+	 */
+	private static boolean requiresPopulation = false;
+
 	public static void main(String[] args) {
 		try {
-			// Fetch the HTML content of the website.
+			// Fetch the HTML content of the web site.
 			String url = "https://de.wiki.forgeofempires.com/index.php?title=Liste_besonderer_Geb%C3%A4ude";
 			String htmlContent = fetchHtmlContent(url);
 
@@ -403,6 +419,12 @@ public class WebsiteParser {
 		}
 	}
 
+
+	/**
+	 * 
+	 * @param cell Text containing an html rowspan attribute.
+	 * @return The html rowspan value.
+	 */
 	private static int getRowspan(String cell) {
 		if (cell.contains(" rowspan=\"")) {
 			return Integer.parseInt(cell.split(" rowspan=\"")[1].split("\"")[0]);
@@ -411,6 +433,11 @@ public class WebsiteParser {
 		}
 	}
 
+	/**
+	 * 
+	 * @param cell Text containing an html colspan attribute.
+	 * @return The html colspan value.
+	 */
 	private static int getColspan(String cell) {
 		if (cell.contains(" colspan=\"")) {
 			return Integer.parseInt(cell.split(" colspan=\"")[1].split("\"")[0]);
@@ -419,6 +446,13 @@ public class WebsiteParser {
 		}
 	}
 
+	/**
+	 * Get the alt text of the image html tag, up until the first dash in the
+	 * string.
+	 * 
+	 * @param cell the html cell with an img tag and alt text.
+	 * @return The parsed alt text of the image. Null if no html img tag was found.
+	 */
 	private static String getImageText(String cell) {
 		if (cell.contains("<img ")) {
 			return cell.split("alt=\"")[1].split("-")[0];
@@ -427,29 +461,54 @@ public class WebsiteParser {
 		}
 	}
 
-	private static boolean requiresPopulation = false;
-
+	/**
+	 * Parse a String to return the value as an Integer. Removes different parts of
+	 * the string that are commonly around numbers before parsing.
+	 * 
+	 * @param intString String that mainly contains just a number, possibly with
+	 *                  some limited number related text.
+	 * @return The Strings content as an Integer.
+	 */
 	private static int parseInt(String intString) {
 		// Replaces double dash with single dash. Since assuming the goal is to have it
-		// negative, and not invert it.
-		return Integer.parseInt(intString.replace("%", "").replace(" x", "").replace(" Min.", "").replace(" Std.", "").replace(" T.", "")
-				.replace(".", "").replace("--", "-"));
+		// negative, and not to invert it.
+		return Integer.parseInt(intString.replace("%", "").replace(" x", "").replace(" Min.", "").replace(" Std.", "")
+				.replace(" T.", "").replace(".", "").replace("--", "-"));
 	}
 
+	/**
+	 * Removes all html tags. Expects the string to either start with an opening
+	 * tag, or having an additional closing tag, meaning a new opening tag could be
+	 * added at the start.
+	 * 
+	 * @param cell Html cell with tags.
+	 * @return The text content of the html without any tags.
+	 */
 	private static String cleanHtmlSplit(String cell) {
-		if (!cell.startsWith("<xx")) {
+		if (!cell.startsWith("<")) {
 			cell = "<xx" + cell;
 		}
 		return cell.replaceAll("<.*?>", "").trim();
 	}
 
-	private static String lastAge;
-
+	/**
+	 * Add the data for the given dataType to the production of all the buildings in
+	 * the given list. Unknown dataTypes will throw an exception. Expects to add the
+	 * current age first, which will then be remembered for all following data,
+	 * until a new age is passed.
+	 * 
+	 * @param buildings List of buildings to add the properties to.
+	 * @param dataType  The dataType, normally the table heading or name of an icon.
+	 * @param data      The data to add, normally a cell of the table with numbers.
+	 * @param factor    A multiplicative factor for the data, that may be passed to
+	 *                  {@link WebsiteParser#buildFormulaString(String, String, double, double)
+	 *                  buildFormulaString}
+	 */
 	private static void addProductionToBuildings(List<WikiBuilding> buildings, String dataType, String data,
 			double factor) {
 		switch (dataType) {
 		case "Zeitalter":
-			// Remember last age, and assume all following calls are for that age.
+			// Remember last age, assuming all following calls are for that age.
 			lastAge = data;
 			break;
 		case "happiness":
@@ -526,6 +585,7 @@ public class WebsiteParser {
 		case "goods":
 		case "all_goods_of_age":
 		case "random_good_of_age":
+			// TODO: There should be some buildings that give goods of a different age?
 			buildings.forEach(b -> b.setGoods(buildFormulaString(lastAge, b.getGoods(), parseInt(data), factor)));
 			break;
 		case "icon_great_building_bonus_guild_goods":
@@ -540,22 +600,19 @@ public class WebsiteParser {
 			buildings.forEach(b -> b.setUnits(buildFormulaString(lastAge, b.getUnits(), parseInt(data), factor)));
 			break;
 		case "armyuniticons_90x90_rogue":
-			// Special currently ignores age.
-			// TODO: Get unit name from parsed page?
+			// Assuming the age can be ignored here.
+			// TODO: Get unit name from parsed page for all the specials?
 			buildings.forEach(b -> b.appendSpecialProduction(parseInt(data) * factor + "x Agent"));
 			break;
 		case "armyuniticons_90x90_color_guard":
-			// Special currently ignores age.
-			// TODO: Get unit name from parsed page?
+			// Assuming the age can be ignored here.
 			buildings.forEach(b -> b.appendSpecialProduction(parseInt(data) * factor + "x Fahnenwache"));
 			break;
 		case "armyuniticons_90x90_SpaceAgeJupiterMoon_champion":
-			// Special currently ignores age.
-			// TODO: Get unit name from parsed page?
+			// Assuming the age can be ignored here.
 			buildings.forEach(b -> b.appendSpecialProduction(parseInt(data) * factor + "x Held"));
 		case "armyuniticons_90x90_military_drummer":
-			// Special currently ignores age.
-			// TODO: Get unit name from parsed page?
+			// Assuming the age can be ignored here.
 			buildings.forEach(b -> b.appendSpecialProduction(parseInt(data) * factor + "x Trommler"));
 			break;
 		default:
@@ -563,10 +620,19 @@ public class WebsiteParser {
 		}
 	}
 
-	// Used in formula to compare the age against.
-	private static final String compareAgeTo = "$B$26";
-
-//	private static final String compareAgeTo = "$Z$1";
+	/**
+	 * Extend the given formula with the given data. The formula then may return
+	 * different values based on {@link WebsiteParser#compareAgeTo compareAgeTo}.
+	 * Current format is made for german open office calc.
+	 * 
+	 * @param age            The age that the given value is for.
+	 * @param currentFormula Current formula. May be empty, and will be extended by
+	 *                       the given value.
+	 * @param ageValue       The value specific to the age.
+	 * @param factor         An additional factor to multiply the value with. Factor
+	 *                       of 1 will be omitted.
+	 * @return The extended formula as a single string.
+	 */
 	private static String buildFormulaString(String age, String currentFormula, double ageValue, double factor) {
 		if (currentFormula == null || currentFormula.isEmpty()) {
 			currentFormula = "=\"ERROR\"";
@@ -576,8 +642,6 @@ public class WebsiteParser {
 		if (factor != 1) {
 			factorString = "*" + converDoubleToString(factor);
 		}
-		// TODO: Change here for possibly other formats like excel or google docs.
-		// Current format: For german open office calc.
 		if (age.equals("undefined")) {
 			// Some buildings have only one line of production, without any age.
 			if (currentFormula.equals("=\"ERROR\"")) {
@@ -594,19 +658,34 @@ public class WebsiteParser {
 			return currentFormula.replace("\"ERROR\"",
 					"WENN(" + compareAgeTo + "=\"" + age + "\";" + valueString + factorString + ";\"ERROR\")");
 		}
-
 	}
 
+	/**
+	 * Converts a double number to a String. Will have no thousand separators, and a
+	 * comma as decimal separator.
+	 * 
+	 * @param number number to be returned as string.
+	 * @return String representation of the given number.
+	 */
 	private static String converDoubleToString(double number) {
 		DecimalFormatSymbols symbols = new DecimalFormatSymbols(Locale.GERMAN);
 		symbols.setDecimalSeparator(',');
-		symbols.setGroupingSeparator('\0'); // Disable thousands separator
+		// Disable thousands separator.
+		symbols.setGroupingSeparator('\0');
 
 		DecimalFormat decimalFormat = new DecimalFormat("0.########", symbols);
 
 		return decimalFormat.format(number);
 	}
 
+	/**
+	 * Add the data for the given dataType to the properties of all the buildings in
+	 * the given list. Unknown dataTypes will throw an exception.
+	 * 
+	 * @param buildings List of buildings to add the properties to.
+	 * @param dataType  The dataType, normally the table heading.
+	 * @param data      The data to add, normally a cell of the table with numbers.
+	 */
 	private static void addPropertiesToBuildings(List<WikiBuilding> buildings, String dataType, String data) {
 		switch (dataType) {
 		case "Eigenschaften":
@@ -632,13 +711,8 @@ public class WebsiteParser {
 			});
 			break;
 		case "Kette:":
-			// TODO: Does Kette also mean needs starting building? Or is the wording just
-			// inconsistent?
-			if (buildings.stream().anyMatch(b -> !b.isNeedsStarting())) {
-				// Starting buildings are also Kette, so not correct.
-//				throw new IllegalArgumentException("Expected building to already be marked as chain: " + data);
-				System.out.println("Found Kette without needsStarting.");
-			}
+			// Similar to "Set", but used for buildings that need to be connected in a
+			// specific order.
 		case "Set:":
 			buildings.forEach(b -> b.setSet(data));
 			break;
@@ -652,10 +726,11 @@ public class WebsiteParser {
 		}
 	}
 
-	private static Random random = new Random();
-
-	// Try to not get blocked or something for making hundreds of calls per second,
-	// or being a bot.
+	/**
+	 * Just sleep for some random amount of time. To make sure the hundreds of calls
+	 * per seconds don't get my IP blocked or something like that. Currently waiting
+	 * between 100 and 500 milliseconds.
+	 */
 	private static void waitBetweenCalls() {
 		try {
 			Thread.sleep(random.nextLong(100, 500));
@@ -665,6 +740,13 @@ public class WebsiteParser {
 		}
 	}
 
+	/**
+	 * Get the complete web site as one string.
+	 * 
+	 * @param urlString The url of the web site.
+	 * @return The html content of the web site.
+	 * @throws IOException
+	 */
 	private static String fetchHtmlContent(String urlString) throws IOException {
 		waitBetweenCalls();
 		StringBuilder htmlContent = new StringBuilder();
