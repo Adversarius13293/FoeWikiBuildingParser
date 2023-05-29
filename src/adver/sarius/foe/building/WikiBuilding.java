@@ -41,8 +41,8 @@ public class WikiBuilding {
 	private String units = "";
 	private String specialProduction = "";
 	// Not reliable. Some buildings can be upgraded with special kit, which is not
-	// listed on the buildings page.
-	// private boolean upgradeable;
+	// listed on the buildings page. But if it's set to true, its probably true.
+	 private boolean upgradeable = false;
 	// Some productions need to be motivated. But not all, which makes it hard to
 	// factor in and display correctly. So just assume everything is motivated
 	// anyways.
@@ -89,6 +89,7 @@ public class WikiBuilding {
 		this.forgePoints = toClone.forgePoints;
 		this.units = toClone.units;
 		this.specialProduction = toClone.specialProduction;
+		this.upgradeable = toClone.upgradeable;
 	}
 	
 	public WikiBuilding(WikiBuilding toClone, String appendName) {
@@ -350,6 +351,14 @@ public class WikiBuilding {
 		} else {
 			this.specialProduction = this.specialProduction + ";" + append;
 		}
+	}
+
+	public boolean isUpgradeable() {
+		return upgradeable;
+	}
+
+	public void setUpgradeable(boolean upgradeable) {
+		this.upgradeable = upgradeable;
 	}
 
 	@Override

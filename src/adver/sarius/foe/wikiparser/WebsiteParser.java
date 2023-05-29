@@ -613,6 +613,9 @@ public class WebsiteParser {
 			if (data.contains("wenn verbunden")) {
 				buildings.forEach(b -> b.setNeedsStarting(true));
 			}
+			if (data.contains("verbessert dieses Gebäude zu")) {
+				buildings.forEach(b -> b.setUpgradeable(true));
+			}
 			// TODO: Also mark chain start buildings?
 			break;
 		case "Art:":
