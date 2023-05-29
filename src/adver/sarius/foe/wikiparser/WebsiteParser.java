@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.URL;
 import java.net.URLConnection;
+import java.nio.file.DirectoryStream.Filter;
 import java.text.DecimalFormat;
 import java.text.DecimalFormatSymbols;
 import java.text.NumberFormat;
@@ -17,6 +18,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Random;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import adver.sarius.foe.building.Street;
 import adver.sarius.foe.building.WikiBuilding;
@@ -40,7 +42,7 @@ public class WebsiteParser {
 			// Iterate over each row, with one building per row.
 			// Skipping the first row which contains headers.
 //            for (int i = 2; i < rows.length; i++) {
-			for (int i = 80; i < 99; i++) {
+			for (int i = 2; i < 5; i++) {
 				String row = rows[i];
 
 				// Extract the building sub page
@@ -132,6 +134,9 @@ public class WebsiteParser {
 				// TODO: Used for percentage and non-24 hour productions.
 				Map<Integer, Double> multFactor = new HashMap<>();
 
+				// Marks specific columns for specific amounts of set members. Key is the
+				// column.
+				Map<Integer, Integer> setProduction = new HashMap<>();
 				// Used to lay out the headers, and find the correct column for each header row.
 				// Each row is saved as the key, starting with 1. They contain a map with each
 				// column that was already processed in that row.
@@ -184,8 +189,20 @@ public class WebsiteParser {
 									String cleanedCell = cleanHtmlSplit(cell);
 									if (cell.contains("<img ") && cleanedCell.matches("[0-9]+ x")) {
 										// Assuming image + this text means set-production.
-										// TODO: Do something with set-production.
-
+										if (setProduction.containsKey(spanningCol)) {
+											throw new IllegalArgumentException(
+													"Column already marked for set-production: " + spanningCol);
+										}
+										// Assuming new set buildings are also always added to the setProduction map.
+										// Assuming there are no mixed sets.
+										if (!setProduction.containsValue(parseInt(cleanedCell))) {
+											// Assuming the first building is always without any sets.
+											// BuildingName [2 x Set]
+											buildings.add(
+													new WikiBuilding(buildings.get(0), " [" + cleanedCell + " Set]"));
+										}
+										// Assuming there are no 0x header entries.
+										setProduction.put(spanningCol, parseInt(cleanedCell));
 									} else if (cleanedCell.matches("[0-9]+%")) {
 										// Production chance.
 										multFactor.put(spanningCol,
@@ -193,13 +210,20 @@ public class WebsiteParser {
 										// TODO: Maybe not needed, and already covered by text heading later on?
 										buildings.forEach(b -> {
 											if (!b.getSpecialProduction().contains("Zufallsproduktion!")) {
-												b.appendSpecialProduction("Zufallsproduktion!");
+												b.appendSpecialProduction("Einberechnete Zufallsproduktion!");
 											}
 										});
 									} else if (cleanedCell.matches("[0-9]+ Min.")) {
 										// Different production times. Scale up to 24 hours.
 										double factor = 60. / parseInt(cleanedCell) * 24;
 										multFactor.put(spanningCol, multFactor.get(spanningCol) * factor);
+
+										buildings.forEach(b -> {
+											if (!b.getSpecialProduction()
+													.contains("Produktion auf 24 Stunden gerechnet!")) {
+												b.appendSpecialProduction("Produktion auf 24 Stunden gerechnet!");
+											}
+										});
 
 										// TODO: Somehow mark or handle production buildings
 //										if (buildings.stream().anyMatch(b -> !"Produktionsstätten".equals(b.getType())
@@ -217,10 +241,23 @@ public class WebsiteParser {
 									} else if (cleanedCell.matches("[0-9]+ Std.")) {
 										double factor = 24. / parseInt(cleanedCell);
 										multFactor.put(spanningCol, multFactor.get(spanningCol) * factor);
+										buildings.forEach(b -> {
+											if (!b.getSpecialProduction()
+													.contains("Produktion auf 24 Stunden gerechnet!")) {
+												b.appendSpecialProduction("Produktion auf 24 Stunden gerechnet!");
+											}
+										});
 									} else if (cleanedCell.matches("[0-9]+ T.")) {
 										double factor = 1. / parseInt(cleanedCell);
 										multFactor.put(spanningCol, multFactor.get(spanningCol) * factor);
-
+										if (!"1 T.".equals(cleanedCell)) {
+											buildings.forEach(b -> {
+												if (!b.getSpecialProduction()
+														.contains("Produktion auf 24 Stunden gerechnet!")) {
+													b.appendSpecialProduction("Produktion auf 24 Stunden gerechnet!");
+												}
+											});
+										}
 									} else if (cell.contains("<img ")) {
 										// Normal header processing for actual products instead of structure.
 										// Does not need to go over multiple rows, and hopefully not multiple columns.
@@ -334,7 +371,21 @@ public class WebsiteParser {
 						for (c = 1; c < productionCells.length; c++) {
 							String cell = cleanHtmlSplit(productionCells[c]);
 //							System.out.println(headings.get(c - 1) + ": " + cell);
-							addProductionToBuildings(buildings, headings.get(c), cell, multFactor.get(c));
+							List<WikiBuilding> filteredBuildings = null;
+							// If this production requires specific set counts, filter buildings out based
+							// on their name.
+							if (setProduction.containsKey(c)) {
+								final int tmp = c;
+								// TODO: Save number of required set members as integer in building object?
+								// Apply production to all buildings with at least that many set members.
+								filteredBuildings = buildings.stream().filter(b -> b.getName().contains(" x Set]")
+										&& parseInt(b.getName().split(" \\[")[1].split(" x Set\\]")[0]) >= setProduction
+												.get(tmp))
+										.collect(Collectors.toList());
+							} else {
+								filteredBuildings = buildings;
+							}
+							addProductionToBuildings(filteredBuildings, headings.get(c), cell, multFactor.get(c));
 						}
 						if ((headings.size()) != c) {
 							System.out.println("Missmatch of headings to production content!");
@@ -381,7 +432,7 @@ public class WebsiteParser {
 	private static int parseInt(String intString) {
 		// Replaces double dash with single dash. Since assuming the goal is to have it
 		// negative, and not invert it.
-		return Integer.parseInt(intString.replace("%", "").replace(" Min.", "").replace(" Std.", "").replace(" T.", "")
+		return Integer.parseInt(intString.replace("%", "").replace(" x", "").replace(" Min.", "").replace(" Std.", "").replace(" T.", "")
 				.replace(".", "").replace("--", "-"));
 	}
 
@@ -522,8 +573,8 @@ public class WebsiteParser {
 		}
 		String valueString = converDoubleToString(ageValue);
 		String factorString = "";
-		if(factor != 1) {
-			factorString = "*"+converDoubleToString(factor);
+		if (factor != 1) {
+			factorString = "*" + converDoubleToString(factor);
 		}
 		// TODO: Change here for possibly other formats like excel or google docs.
 		// Current format: For german open office calc.
@@ -538,8 +589,7 @@ public class WebsiteParser {
 		} else if (currentFormula.contains(age)) {
 			// Entry already exists. But some buildings produce different sets of goods or
 			// forge points, so add all together.
-			return currentFormula.replace("\"" + age + "\";",
-					"\"" + age + "\";" + valueString + factorString + "+");
+			return currentFormula.replace("\"" + age + "\";", "\"" + age + "\";" + valueString + factorString + "+");
 		} else {
 			return currentFormula.replace("\"ERROR\"",
 					"WENN(" + compareAgeTo + "=\"" + age + "\";" + valueString + factorString + ";\"ERROR\")");
@@ -549,12 +599,12 @@ public class WebsiteParser {
 
 	private static String converDoubleToString(double number) {
 		DecimalFormatSymbols symbols = new DecimalFormatSymbols(Locale.GERMAN);
-        symbols.setDecimalSeparator(',');
-        symbols.setGroupingSeparator('\0'); // Disable thousands separator
-        
-        DecimalFormat decimalFormat = new DecimalFormat("0.########", symbols);
-        
-        return decimalFormat.format(number);
+		symbols.setDecimalSeparator(',');
+		symbols.setGroupingSeparator('\0'); // Disable thousands separator
+
+		DecimalFormat decimalFormat = new DecimalFormat("0.########", symbols);
+
+		return decimalFormat.format(number);
 	}
 
 	private static void addPropertiesToBuildings(List<WikiBuilding> buildings, String dataType, String data) {
