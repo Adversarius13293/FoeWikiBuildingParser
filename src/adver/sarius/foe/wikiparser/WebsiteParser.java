@@ -28,7 +28,7 @@ public class WebsiteParser {
 	// Used in formula to compare the age against.
 	/** Used in the formulas to compare the age string against. */
 //	private static final String compareAgeTo = "$Z$1";
-	private static final String compareAgeTo = "$B$26";
+	private static final String compareAgeTo = "$AO$1";
 
 	/** Random object, currently used for the random waiting time. */
 	private static final Random random = new Random();
@@ -55,10 +55,14 @@ public class WebsiteParser {
 			String tableHtml = htmlContent.substring(tableStartIndex, tableEndIndex + tableEndTag.length());
 			String[] rows = tableHtml.split("<tr>");
 
+			// Some buildings have different production based on set members. Create one
+			// instance for each, which means multiple entries for one page.
+			List<WikiBuilding> buildings = new ArrayList<>();
+			
 			// Iterate over each row, with one building per row.
 			// Skipping the first row which contains headers.
-//            for (int i = 2; i < rows.length; i++) {
-			for (int i = 2; i < 5; i++) {
+            for (int i = 2; i < rows.length; i++) {
+//			for (int i = 2; i < 5; i++) {
 				String row = rows[i];
 
 				// Extract the building sub page
@@ -81,9 +85,6 @@ public class WebsiteParser {
 						buildingTableEndIndex + tableEndTag.length());
 				String[] buildingRows = buildingTableHtml.split("<tr>");
 
-				// Some buildings have different production based on set members. Create one
-				// instance for each.
-				List<WikiBuilding> buildings = new ArrayList<>();
 				var building = new WikiBuilding();
 				buildings.add(building);
 				building.setName(buildingName);
@@ -131,10 +132,7 @@ public class WebsiteParser {
 								lastHeading = null;
 							}
 						}
-//						System.out.println("cell: " + cellContent);
 					}
-//					System.out.println("end row");
-
 				}
 				// Finished properties table. Now to the age dependent productions.
 
@@ -335,49 +333,6 @@ public class WebsiteParser {
 									}
 								}
 							}
-							// Old logic before structure analyzing.
-							/*
-							 * // Images need to be analyzed for the columns meaning. if
-							 * (cell.contains("<img ")) { headings.add(getImageText(cell)); // TODO: Somehow
-							 * make copy of building for different set members. // TODO: Currently
-							 * set-productions are ignored, since they will be added as // additional
-							 * headers, which will never get used. // Somehow have to find out which
-							 * set-production belongs to which product. And // somehow generate new building
-							 * entries from it. } else { cell = cleanHtmlSplit(cell); if
-							 * ("Zeitalter".equals(cell)) { headings.add(cell); } else { switch (cell) {
-							 * case "Zeitalter": headings.add(cell); break; case "Verbindung gewährt": //
-							 * Check for chain buildings. Currently assuming it is already marked in the //
-							 * first properties, so just making sure. if (buildings.stream().anyMatch(b ->
-							 * !b.isNeedsStarting())) { throw new IllegalArgumentException(
-							 * "Expected to be already marked as chain building: " + cell); } break; case
-							 * "Benötigt": // Assuming it is only for population. System.out.println(
-							 * "Assuming it requires population: " + buildings.get(0).getName());
-							 * requiresPopulation = true; break; case "Folgendes wird zufällig produziert:":
-							 * buildings.forEach(b -> b.appendSpecialProduction("Zufallsproduktion!"));
-							 * break; case "5 Min.": case "15 Min.": case "1 Std.": case "4 Std.": case
-							 * "8 Std.": case "2 T.": // TODO: Probably production building, still needs
-							 * work!!!!! // There are some non-24h productions. Somehow need to factor those
-							 * in. Same // problem as figuring out the set-productions. if
-							 * (buildings.stream().anyMatch(b -> !"Produktionsstätten".equals(b.getType())
-							 * && !"Zikkurat".equals(b.getName()) && !"Strohhütte".equals(b.getName()) &&
-							 * !"Schrein der Inspiration".equals(b.getName()) &&
-							 * !"Schneekugel".equals(b.getName()) &&
-							 * !"Renaissance-Villa".equals(b.getName()) &&
-							 * !"Lebkuchenhaus".equals(b.getName()) &&
-							 * !"Königliches Marmortor".equals(b.getName()))) { throw new
-							 * IllegalArgumentException( "Expected to be a production building: " + cell); }
-							 * buildings.forEach(b -> b.setName(b.getName() + " PRODUCTION")); break; case
-							 * "1 T.": case "wenn motiviert": case "Liefert": case "Produziert": case "": //
-							 * Ignore. break; default:
-							 * 
-							 * if (cell.contains("%")) { // TODO: If percentage is given, factor it in the
-							 * production. Need to find // out // which columns, same problem as for
-							 * set-productions. buildings.forEach(b -> b
-							 * .appendSpecialProduction("TODO Beinhaltet Zufallsproduktion!"));
-							 * buildings.forEach(b -> b.setName(b.getName() + " Zufallsproduktion!"));
-							 * break; } throw new IllegalArgumentException("Unexpected header content: " +
-							 * cell); } } // TODO: Always ignore everything else? }
-							 */
 						}
 					} else {
 						// Not <th, so we are in table data.
@@ -386,11 +341,11 @@ public class WebsiteParser {
 						int c;
 						for (c = 1; c < productionCells.length; c++) {
 							String cell = cleanHtmlSplit(productionCells[c]);
-//							System.out.println(headings.get(c - 1) + ": " + cell);
 							List<WikiBuilding> filteredBuildings = null;
 							// If this production requires specific set counts, filter buildings out based
 							// on their name.
 							if (setProduction.containsKey(c)) {
+								// Streams sometimes are weird...
 								final int tmp = c;
 								// TODO: Save number of required set members as integer in building object?
 								// Apply production to all buildings with at least that many set members.
@@ -404,21 +359,33 @@ public class WebsiteParser {
 							addProductionToBuildings(filteredBuildings, headings.get(c), cell, multFactor.get(c));
 						}
 						if ((headings.size()) != c) {
-							System.out.println("Missmatch of headings to production content!");
+							throw new IllegalArgumentException("Missmatch of headings to production content! " + c);
 						}
 					}
 				}
 
-				// Streams sometimes are weird...
-				final int temp = i;
-				buildings.forEach(b -> System.out.println(temp + ": " + b.toString()));
+				// For easier debugging. Output each building when processed, include its row.
+//				final int temp = i;
+//				buildings.forEach(b -> System.out.println(temp + ": " + b.toString()));
 			}
 			System.out.println("Done");
+			outputBuildings(buildings);
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
 	}
 
+	/**
+	 * 
+	 * Output the list of buildings to the console. Filters the given list.
+	 * 
+	 * @param buildings List of all buildings, will still be filtered.
+	 */
+	private static void outputBuildings(List<WikiBuilding> buildings) {
+		// Modify here to change what buildings should be printed out.
+		// TODO: Somehow filter out set-production buildings and only keep the max.
+		buildings.stream().filter(b -> !b.isUpgradeable()).forEach(System.out::println);
+	}
 
 	/**
 	 * 
@@ -728,12 +695,11 @@ public class WebsiteParser {
 
 	/**
 	 * Just sleep for some random amount of time. To make sure the hundreds of calls
-	 * per seconds don't get my IP blocked or something like that. Currently waiting
-	 * between 100 and 500 milliseconds.
+	 * per seconds don't get my IP blocked or something like that.
 	 */
 	private static void waitBetweenCalls() {
 		try {
-			Thread.sleep(random.nextLong(100, 500));
+			Thread.sleep(random.nextLong(500, 1500));
 		} catch (InterruptedException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();

@@ -21,7 +21,6 @@ public class WikiBuilding {
 	// documents.
 	private String happiness = "";
 	private String population = "";
-	// Values as int, representing percentage values. So 3 = 3%.
 	private String attackerAttack = "";
 	private String attackerDefense = "";
 	private String defenderAttack = "";
@@ -47,8 +46,6 @@ public class WikiBuilding {
 	// factor in and display correctly. So just assume everything is motivated
 	// anyways.
 	// private boolean needsMotivation;
-	// Some productions only count with enough set parts. They should be made as
-	// separate buildings.
 	// Some buildings say they can not be plundered or motivated. Since some
 	// buildings only produce stuff when motivated, which blocks plundering, it's
 	// not really accurate.
@@ -367,7 +364,7 @@ public class WikiBuilding {
 				+ gemsMin24 + "|" + gemsMax24 + "|" + needsStarting + "|" + happiness + "|" + population + "|"
 				+ attackerAttack + "|" + attackerDefense + "|" + defenderAttack + "|" + defenderDefense + "|" + ranking
 				+ "|" + moneyPercent + "|" + suppliesPercent + "|" + money + "|" + supplies + "|" + guildPower + "|" + medals + "|" + goods + "|" + guildGoods
-				+ "|" + blueprints + "|" + diamonds + "|" + forgePoints + "|" + units + "|" + specialProduction;
+				+ "|" + blueprints + "|" + diamonds + "|" + forgePoints + "|" + units + "|" + specialProduction + "|" + upgradeable;
 	}
 
 	// TODO: Non-24 hour productions.
