@@ -41,9 +41,14 @@ public class WebsiteParser {
 	 */
 	private static boolean requiresPopulation = false;
 
+	public static final String tableStartTag = "<table";
+	public static final String tableEndTag = "</table>";
+
 	// TODO: Parse limited buildings page. Maybe even military buildings?
-	// TODO: Some hard coded buildings? Like Siedlung and GEX buildings? Fountain probabilities?
-	// TODO: Remove WENN from formula, if every age produces the same?
+	// TODO: Some hard coded buildings? Like settlement and GEX buildings? Fountain
+	// probabilities?
+	// TODO: Remove WENN from formula in post processing, if every age produces the
+	// same?
 	public static void main(String[] args) {
 		var building = new WikiBuilding();
 		try {
@@ -52,8 +57,6 @@ public class WebsiteParser {
 			String htmlContent = fetchHtmlContent(url);
 
 			// Parse the table rows within the HTML content
-			String tableStartTag = "<table";
-			String tableEndTag = "</table>";
 			int tableStartIndex = htmlContent.indexOf(tableStartTag);
 			int tableEndIndex = htmlContent.indexOf(tableEndTag, tableStartIndex);
 			String tableHtml = htmlContent.substring(tableStartIndex, tableEndIndex + tableEndTag.length());
@@ -73,302 +76,317 @@ public class WebsiteParser {
 				String buildingLink = cells[2].split("href=\"")[1].split("\"")[0];
 				String buildingName = cells[2].split("\">")[1].split("</a>")[0];
 
-				// Fetch the linked page for each building
 				String buildingUrl = "https://de.wiki.forgeofempires.com" + buildingLink;
-				String buildingHtmlContent = fetchHtmlContent(buildingUrl);
-
-				// Starting with the properties table.
-				// Parse the table rows within the linked page
-				int buildingTableStartIndex = buildingHtmlContent.indexOf(tableStartTag);
-				// The page contains a table inside a table, so the first found end tag is from
-				// the inner table.
-				// But we just assume the inner table is always in the last row.
-				int buildingTableEndIndex = buildingHtmlContent.indexOf(tableEndTag, buildingTableStartIndex);
-				String buildingTableHtml = buildingHtmlContent.substring(buildingTableStartIndex,
-						buildingTableEndIndex + tableEndTag.length());
-				String[] buildingRows = buildingTableHtml.split("<tr>");
-
-				// Some buildings have different production based on set members. Create one
-				// instance for each, which means multiple entries for one page.
-				List<WikiBuilding> buildings = new ArrayList<>();
-				building = new WikiBuilding();
-				building.setName(buildingName);
-				buildings.add(building);
-
-				String lastHeading = null;
-				requiresPopulation = false;
-				// Process each cell within the table rows
-				for (String buildingRow : buildingRows) {
-					String[] buildingCells = buildingRow.split("<td");
-
-					for (String cell : buildingCells) {
-						if (cell.isBlank()) {
-							continue;
-						}
-						// Remove HTML tags and trim whitespace from the cell content
-						String cellContent = cleanHtmlSplit(cell);
-						if (cellContent.isBlank()) {
-							continue;
-						}
-						// Sometimes data is in the same table row, and sometimes not.
-						// So depending on the last cell, handle the content differently.
-						if (lastHeading == null) {
-							lastHeading = cellContent;
-						} else if ("Tauschwert:".equals(lastHeading)) {
-							// Bit weird solution to check trade prices here, but table in table is just
-							// weird.
-							// Also assuming this is the last cell, since lastHeading will be stuck now.
-							if ("1 T.".equals(cellContent)) {
-
-								buildings.forEach(b -> b.setCoins24(parseInt(cleanHtmlSplit(buildingCells[2]))));
-								String[] splitted = cleanHtmlSplit(buildingCells[3]).split(" - ");
-								buildings.forEach(b -> b.setGemsMin24(parseInt(splitted[0])));
-								// if it is just always 0 gems.
-								if (splitted.length > 1) {
-									buildings.forEach(b -> b.setGemsMax24(parseInt(splitted[1])));
-								}
-							}
-						} else {
-							if ("Eigenschaften".equals(lastHeading) && "Art:".equals(cellContent)) {
-								// Sometimes buildings (like Kloster) have no leading properties text.
-								// Assumes "Art:" as the next column.
-								lastHeading = cellContent;
-							} else {
-								addPropertiesToBuildings(buildings, lastHeading, cellContent);
-								lastHeading = null;
-							}
-						}
-					}
-				}
-				// Finished properties table. Now to the age dependent productions.
-
-				buildingTableStartIndex = buildingHtmlContent.indexOf(tableStartTag, buildingTableEndIndex);
-				buildingTableEndIndex = buildingHtmlContent.indexOf(tableEndTag, buildingTableStartIndex);
-				buildingTableHtml = buildingHtmlContent.substring(buildingTableStartIndex,
-						buildingTableEndIndex + tableEndTag.length());
-				buildingRows = buildingTableHtml.split("<tr>");
-
-				// Type of production, with same index as the column, starting at 1.
-				List<String> headings = new ArrayList<>();
-				headings.add("dummyIndex");
-				// TODO: Used for percentage and non-24 hour productions.
-				Map<Integer, Double> multFactor = new HashMap<>();
-
-				// Marks specific columns for specific amounts of set members. Key is the
-				// column.
-				Map<Integer, Integer> setProduction = new HashMap<>();
-				// Used to lay out the headers, and find the correct column for each header row.
-				// Each row is saved as the key, starting with 1. They contain a map with each
-				// column that was already processed in that row.
-				Map<Integer, List<Integer>> headerStructureHelper = new HashMap<>();
-
-				// Process each cell within the production table rows.
-				for (int r = 1; r < buildingRows.length; r++) {
-					// Get headers. They can be in multiple rows or columns.
-					if (buildingRows[r].contains("<th")) {
-						String[] headerCells = buildingRows[r].split("<th");
-						for (int h = 1; h < headerCells.length; h++) {
-							String cell = headerCells[h];
-
-							int rowspan = getRowspan(cell);
-							int colspan = getColspan(cell);
-
-							// If multiple rows, add to each row. If multiple cols, add multiple times.
-							for (int spanningRow = r; spanningRow < r + rowspan; spanningRow++) {
-								if (!headerStructureHelper.containsKey(spanningRow)) {
-									var array = new ArrayList<Integer>();
-									// Fill with dummy, since headers start at index 1.
-									array.add(-1);
-									headerStructureHelper.put(spanningRow, array);
-								}
-
-								List<Integer> list = headerStructureHelper.get(spanningRow);
-								int freeCol = list.size();
-								// Find "holes" to fill.
-								for (int tmp = 1; tmp < list.size(); tmp++) {
-									if (tmp - list.get(tmp) < 0) {
-										freeCol = tmp;
-									}
-								}
-
-								for (int spanningCol = freeCol; spanningCol < freeCol + colspan; spanningCol++) {
-									// Assuming columns are filled from left to right.
-									if (list.contains(spanningCol)) {
-										throw new IllegalArgumentException(
-												"Column already processed: " + spanningRow + "/" + spanningCol);
-									}
-									// Mark column as processed.
-									list.add(spanningCol, spanningCol);
-
-									// Initialize map.
-									if (!multFactor.containsKey(spanningCol)) {
-										multFactor.put(spanningCol, 1.);
-									}
-
-									// Evaluate content, to fill other lists.
-									String cleanedCell = cleanHtmlSplit(cell);
-									if (cell.contains("<img ") && cleanedCell.matches("[0-9]+ x")) {
-										// Assuming image + this text means set-production.
-										if (setProduction.containsKey(spanningCol)) {
-											throw new IllegalArgumentException(
-													"Column already marked for set-production: " + spanningCol);
-										}
-										// Assuming new set buildings are also always added to the setProduction map.
-										// Assuming there are no mixed sets.
-										if (!setProduction.containsValue(parseInt(cleanedCell))) {
-											// Assuming the first building is always without any sets.
-											// BuildingName [2 x Set]
-											buildings.add(new WikiBuilding(building, " [" + cleanedCell + " Set]"));
-										}
-										// Assuming there are no 0x header entries.
-										setProduction.put(spanningCol, parseInt(cleanedCell));
-									} else if (cleanedCell.matches("[0-9]+%")) {
-										// Production chance.
-										multFactor.put(spanningCol,
-												multFactor.get(spanningCol) * (parseInt(cleanedCell) / 100.));
-										// TODO: Maybe not needed, and already covered by text heading later on?
-										buildings.forEach(
-												b -> b.appendSpecialProduction("Einberechnete Zufallsproduktion!"));
-									} else if (cleanedCell.matches("[0-9]+ Min.")) {
-										// Different production times. Scale up to 24 hours.
-										double factor = 60. / parseInt(cleanedCell) * 24;
-										multFactor.put(spanningCol, multFactor.get(spanningCol) * factor);
-
-										buildings.forEach(
-												b -> b.appendSpecialProduction("Produktion auf 24 Stunden gerechnet!"));
-
-										// TODO: Somehow mark or handle production buildings.
-										// Some buildings produce only supplies. Adding them is wrong, and even too long
-										// of a string.
-//										if (buildings.stream().anyMatch(b -> !"Produktionsstätten".equals(b.getType())
-//												&& !"Zikkurat".equals(b.getName()) && !"Strohhütte".equals(b.getName())
-//												&& !"Schrein der Inspiration".equals(b.getName())
-//												&& !"Schneekugel".equals(b.getName())
-//												&& !"Renaissance-Villa".equals(b.getName())
-//												&& !"Lebkuchenhaus".equals(b.getName())
-//												&& !"Königliches Marmortor".equals(b.getName()))) {
-//											throw new IllegalArgumentException(
-//													"Expected to be a production building: " + cell);
-//										}
-//										buildings.forEach(b -> b.setName(b.getName() + " PRODUCTION"));
-
-									} else if (cleanedCell.matches("[0-9]+ Std.")) {
-										double factor = 24. / parseInt(cleanedCell);
-										multFactor.put(spanningCol, multFactor.get(spanningCol) * factor);
-										buildings.forEach(
-												b -> b.appendSpecialProduction("Produktion auf 24 Stunden gerechnet!"));
-									} else if (cleanedCell.matches("[0-9]+ T.")) {
-										double factor = 1. / parseInt(cleanedCell);
-										multFactor.put(spanningCol, multFactor.get(spanningCol) * factor);
-										if (!"1 T.".equals(cleanedCell)) {
-											buildings.forEach(b -> b
-													.appendSpecialProduction("Produktion auf 24 Stunden gerechnet!"));
-										}
-									} else if (cell.contains("<img ")) {
-										// Normal header processing for actual products instead of structure.
-										// Does not need to go over multiple rows, and hopefully not multiple columns.
-
-										// Images need to be analyzed for the columns meaning.
-										if (headings.size() <= spanningCol) {
-											if (headings.size() != spanningCol) {
-												throw new IllegalArgumentException(
-														"Unexpected order of headings: " + spanningCol);
-											}
-											headings.add(getImageText(cell));
-										}
-									} else {
-										switch (cleanedCell) {
-										case "Zeitalter":
-											// Assumes the production cells can be filled from left to right.
-											// But ignore if they go over multiple rows.
-											if (headings.size() <= spanningCol) {
-												if (headings.size() != spanningCol) {
-													throw new IllegalArgumentException(
-															"Unexpected order of headings: " + spanningCol);
-												}
-												headings.add(cleanedCell);
-											}
-											break;
-										case "Verbindung gewährt":
-											// Check for chain buildings. Currently assuming it is already marked in the
-											// first properties, so just making sure.
-											if (buildings.stream().anyMatch(b -> !b.isNeedsStarting())) {
-												throw new IllegalArgumentException(
-														"Expected to be already marked as chain building: "
-																+ cleanedCell);
-											}
-											break;
-										case "Benötigt":
-											// Assuming keyword is only for population.
-											if (!"Produktionsstätten".equals(building.getType())
-													&& !"Militärgebäude".equals(building.getType())) {
-												System.out.println(
-														"Assuming building requires population, but it has an unexpected type: "
-																+ building.getName());
-											}
-											requiresPopulation = true;
-											// TODO: Maybe save in additional list, and apply this to the corresponding
-											// column?
-											break;
-										case "Folgendes wird zufällig produziert:":
-											buildings.forEach(b -> b.appendSpecialProduction("Zufallsproduktion!"));
-											break;
-										case "wenn motiviert":
-										case "Liefert":
-										case "Produziert":
-										case "":
-											// Ignore.
-											break;
-										default:
-											throw new IllegalArgumentException("Unexpected header content: " + cell);
-										}
-									}
-								}
-							}
-						}
-					} else {
-						// Not <th, so we are in table data.
-						String[] productionCells = buildingRows[r].split("<td");
-						lastAge = "undefined";
-						int c;
-						for (c = 1; c < productionCells.length; c++) {
-							String cell = cleanHtmlSplit(productionCells[c]);
-							List<WikiBuilding> filteredBuildings = null;
-							// If this production requires specific set counts, filter buildings out based
-							// on their name.
-							if (setProduction.containsKey(c)) {
-								// Streams sometimes are weird...
-								final int tmp = c;
-								// TODO: Save number of required set members as integer in building object?
-								// Apply production to all buildings with at least that many set members.
-								filteredBuildings = buildings.stream().filter(b -> b.getName().contains(" x Set]")
-										&& parseInt(b.getName().split(" \\[")[1].split(" x Set\\]")[0]) >= setProduction
-												.get(tmp))
-										.collect(Collectors.toList());
-							} else {
-								filteredBuildings = buildings;
-							}
-							addProductionToBuildings(filteredBuildings, headings.get(c), cell, multFactor.get(c));
-						}
-						if ((headings.size()) != c) {
-							throw new IllegalArgumentException("Missmatch of headings to production content! " + c);
-						}
-					}
-				}
-
+				List<WikiBuilding> buildings = processBuildingWebSite(buildingName, buildingUrl);
 				// For easier debugging. Output each building when processed, include its row.
 				final int temp = i;
 				buildings.forEach(b -> System.out.println(temp + ": " + b.toString()));
 				allBuildings.addAll(buildings);
 			}
 			System.out.println("Done");
-			// No real need to filter out buildings? Can just do that in the document
-			// itself.
+			// No real need to filter out buildings afterwards? Can just do that in the
+			// resulting document itself.
 //			outputBuildings(allBuildings);
 		} catch (Exception e) {
 			System.out.println("Exception with building: " + building.getName());
 			e.printStackTrace();
 		}
+	}
+
+	// TODO: Parse building name from inside the method.
+	/**
+	 * Parse the html web site from the given url, and extract all relevant
+	 * informations.
+	 * 
+	 * @param buildingName Name of the building.
+	 * @param buildingUrl  Url of the building's detail page.
+	 * @return All buildings created from that page. Set-productions create
+	 *         additional building entries.
+	 * @throws IOException
+	 */
+	private static List<WikiBuilding> processBuildingWebSite(String buildingName, String buildingUrl)
+			throws IOException {
+		// Fetch the linked page for each building
+		String buildingHtmlContent = fetchHtmlContent(buildingUrl);
+
+		// Starting with the properties table.
+		// Parse the table rows within the linked page
+		int buildingTableStartIndex = buildingHtmlContent.indexOf(tableStartTag);
+		// The page contains a table inside a table, so the first found end tag is from
+		// the inner table.
+		// But we just assume the inner table is always in the last row.
+		int buildingTableEndIndex = buildingHtmlContent.indexOf(tableEndTag, buildingTableStartIndex);
+		String buildingTableHtml = buildingHtmlContent.substring(buildingTableStartIndex,
+				buildingTableEndIndex + tableEndTag.length());
+		String[] buildingRows = buildingTableHtml.split("<tr>");
+
+		// Some buildings have different production based on set members. Create one
+		// instance for each, which means multiple entries for one page.
+		List<WikiBuilding> buildings = new ArrayList<>();
+		var building = new WikiBuilding();
+		building.setName(buildingName);
+		buildings.add(building);
+
+		String lastHeading = null;
+		requiresPopulation = false;
+		// Process each cell within the table rows
+		for (String buildingRow : buildingRows) {
+			String[] buildingCells = buildingRow.split("<td");
+
+			for (String cell : buildingCells) {
+				if (cell.isBlank()) {
+					continue;
+				}
+				// Remove HTML tags and trim whitespace from the cell content
+				String cellContent = cleanHtmlSplit(cell);
+				if (cellContent.isBlank()) {
+					continue;
+				}
+				// Sometimes data is in the same table row, and sometimes not.
+				// So depending on the last cell, handle the content differently.
+				if (lastHeading == null) {
+					lastHeading = cellContent;
+				} else if ("Tauschwert:".equals(lastHeading)) {
+					// Bit weird solution to check trade prices here, but table in table is just
+					// weird.
+					// Also assuming this is the last cell, since lastHeading will be stuck now.
+					if ("1 T.".equals(cellContent)) {
+
+						buildings.forEach(b -> b.setCoins24(parseInt(cleanHtmlSplit(buildingCells[2]))));
+						String[] splitted = cleanHtmlSplit(buildingCells[3]).split(" - ");
+						buildings.forEach(b -> b.setGemsMin24(parseInt(splitted[0])));
+						// if it is just always 0 gems.
+						if (splitted.length > 1) {
+							buildings.forEach(b -> b.setGemsMax24(parseInt(splitted[1])));
+						}
+					}
+				} else {
+					if ("Eigenschaften".equals(lastHeading) && "Art:".equals(cellContent)) {
+						// Sometimes buildings (like Kloster) have no leading properties text.
+						// Assumes "Art:" as the next column.
+						lastHeading = cellContent;
+					} else {
+						addPropertiesToBuildings(buildings, lastHeading, cellContent);
+						lastHeading = null;
+					}
+				}
+			}
+		}
+		// Finished properties table. Now to the age dependent productions.
+
+		buildingTableStartIndex = buildingHtmlContent.indexOf(tableStartTag, buildingTableEndIndex);
+		buildingTableEndIndex = buildingHtmlContent.indexOf(tableEndTag, buildingTableStartIndex);
+		buildingTableHtml = buildingHtmlContent.substring(buildingTableStartIndex,
+				buildingTableEndIndex + tableEndTag.length());
+		buildingRows = buildingTableHtml.split("<tr>");
+
+		// Type of production, with same index as the column, starting at 1.
+		List<String> headings = new ArrayList<>();
+		headings.add("dummyIndex");
+		// TODO: Used for percentage and non-24 hour productions.
+		Map<Integer, Double> multFactor = new HashMap<>();
+
+		// Marks specific columns for specific amounts of set members. Key is the
+		// column.
+		Map<Integer, Integer> setProduction = new HashMap<>();
+		// Used to lay out the headers, and find the correct column for each header row.
+		// Each row is saved as the key, starting with 1. They contain a map with each
+		// column that was already processed in that row.
+		Map<Integer, List<Integer>> headerStructureHelper = new HashMap<>();
+
+		// Process each cell within the production table rows.
+		for (int r = 1; r < buildingRows.length; r++) {
+			// Get headers. They can be in multiple rows or columns.
+			if (buildingRows[r].contains("<th")) {
+				String[] headerCells = buildingRows[r].split("<th");
+				for (int h = 1; h < headerCells.length; h++) {
+					String cell = headerCells[h];
+
+					int rowspan = getRowspan(cell);
+					int colspan = getColspan(cell);
+
+					// If multiple rows, add to each row. If multiple cols, add multiple times.
+					for (int spanningRow = r; spanningRow < r + rowspan; spanningRow++) {
+						if (!headerStructureHelper.containsKey(spanningRow)) {
+							var array = new ArrayList<Integer>();
+							// Fill with dummy, since headers start at index 1.
+							array.add(-1);
+							headerStructureHelper.put(spanningRow, array);
+						}
+
+						List<Integer> list = headerStructureHelper.get(spanningRow);
+						int freeCol = list.size();
+						// Find "holes" to fill.
+						for (int tmp = 1; tmp < list.size(); tmp++) {
+							if (tmp - list.get(tmp) < 0) {
+								freeCol = tmp;
+							}
+						}
+
+						for (int spanningCol = freeCol; spanningCol < freeCol + colspan; spanningCol++) {
+							// Assuming columns are filled from left to right.
+							if (list.contains(spanningCol)) {
+								throw new IllegalArgumentException(
+										"Column already processed: " + spanningRow + "/" + spanningCol);
+							}
+							// Mark column as processed.
+							list.add(spanningCol, spanningCol);
+
+							// Initialize map.
+							if (!multFactor.containsKey(spanningCol)) {
+								multFactor.put(spanningCol, 1.);
+							}
+
+							// Evaluate content, to fill other lists.
+							String cleanedCell = cleanHtmlSplit(cell);
+							if (cell.contains("<img ") && cleanedCell.matches("[0-9]+ x")) {
+								// Assuming image + this text means set-production.
+								if (setProduction.containsKey(spanningCol)) {
+									throw new IllegalArgumentException(
+											"Column already marked for set-production: " + spanningCol);
+								}
+								// Assuming new set buildings are also always added to the setProduction map.
+								// Assuming there are no mixed sets.
+								if (!setProduction.containsValue(parseInt(cleanedCell))) {
+									// Assuming the first building is always without any sets.
+									// BuildingName [2 x Set]
+									buildings.add(new WikiBuilding(building, " [" + cleanedCell + " Set]"));
+								}
+								// Assuming there are no 0x header entries.
+								setProduction.put(spanningCol, parseInt(cleanedCell));
+							} else if (cleanedCell.matches("[0-9]+%")) {
+								// Production chance.
+								multFactor.put(spanningCol,
+										multFactor.get(spanningCol) * (parseInt(cleanedCell) / 100.));
+								// TODO: Maybe not needed, and already covered by text heading later on?
+								buildings.forEach(b -> b.appendSpecialProduction("Einberechnete Zufallsproduktion!"));
+							} else if (cleanedCell.matches("[0-9]+ Min.")) {
+								// Different production times. Scale up to 24 hours.
+								double factor = 60. / parseInt(cleanedCell) * 24;
+								multFactor.put(spanningCol, multFactor.get(spanningCol) * factor);
+
+								buildings.forEach(
+										b -> b.appendSpecialProduction("Produktion auf 24 Stunden gerechnet!"));
+
+								// TODO: Somehow mark or handle production buildings.
+								// Some buildings produce only supplies. Adding them is wrong, and even too long
+								// of a string.
+//								if (buildings.stream().anyMatch(b -> !"Produktionsstätten".equals(b.getType())
+//										&& !"Zikkurat".equals(b.getName()) && !"Strohhütte".equals(b.getName())
+//										&& !"Schrein der Inspiration".equals(b.getName())
+//										&& !"Schneekugel".equals(b.getName())
+//										&& !"Renaissance-Villa".equals(b.getName())
+//										&& !"Lebkuchenhaus".equals(b.getName())
+//										&& !"Königliches Marmortor".equals(b.getName()))) {
+//									throw new IllegalArgumentException(
+//											"Expected to be a production building: " + cell);
+//								}
+//								buildings.forEach(b -> b.setName(b.getName() + " PRODUCTION"));
+
+							} else if (cleanedCell.matches("[0-9]+ Std.")) {
+								double factor = 24. / parseInt(cleanedCell);
+								multFactor.put(spanningCol, multFactor.get(spanningCol) * factor);
+								buildings.forEach(
+										b -> b.appendSpecialProduction("Produktion auf 24 Stunden gerechnet!"));
+							} else if (cleanedCell.matches("[0-9]+ T.")) {
+								double factor = 1. / parseInt(cleanedCell);
+								multFactor.put(spanningCol, multFactor.get(spanningCol) * factor);
+								if (!"1 T.".equals(cleanedCell)) {
+									buildings.forEach(
+											b -> b.appendSpecialProduction("Produktion auf 24 Stunden gerechnet!"));
+								}
+							} else if (cell.contains("<img ")) {
+								// Normal header processing for actual products instead of structure.
+								// Does not need to go over multiple rows, and hopefully not multiple columns.
+
+								// Images need to be analyzed for the columns meaning.
+								if (headings.size() <= spanningCol) {
+									if (headings.size() != spanningCol) {
+										throw new IllegalArgumentException(
+												"Unexpected order of headings: " + spanningCol);
+									}
+									headings.add(getImageText(cell));
+								}
+							} else {
+								switch (cleanedCell) {
+								case "Zeitalter":
+									// Assumes the production cells can be filled from left to right.
+									// But ignore if they go over multiple rows.
+									if (headings.size() <= spanningCol) {
+										if (headings.size() != spanningCol) {
+											throw new IllegalArgumentException(
+													"Unexpected order of headings: " + spanningCol);
+										}
+										headings.add(cleanedCell);
+									}
+									break;
+								case "Verbindung gewährt":
+									// Check for chain buildings. Currently assuming it is already marked in the
+									// first properties, so just making sure.
+									if (buildings.stream().anyMatch(b -> !b.isNeedsStarting())) {
+										throw new IllegalArgumentException(
+												"Expected to be already marked as chain building: " + cleanedCell);
+									}
+									break;
+								case "Benötigt":
+									// Assuming keyword is only for population.
+									if (!"Produktionsstätten".equals(building.getType())
+											&& !"Militärgebäude".equals(building.getType())) {
+										System.out.println(
+												"Assuming building requires population, but it has an unexpected type: "
+														+ building.getName());
+									}
+									requiresPopulation = true;
+									// TODO: Maybe save in additional list, and apply this to the corresponding
+									// column?
+									break;
+								case "Folgendes wird zufällig produziert:":
+									buildings.forEach(b -> b.appendSpecialProduction("Zufallsproduktion!"));
+									break;
+								case "wenn motiviert":
+								case "Liefert":
+								case "Produziert":
+								case "":
+									// Ignore.
+									break;
+								default:
+									throw new IllegalArgumentException("Unexpected header content: " + cell);
+								}
+							}
+						}
+					}
+				}
+			} else {
+				// Not <th, so we are in table data.
+				String[] productionCells = buildingRows[r].split("<td");
+				lastAge = "undefined";
+				int c;
+				for (c = 1; c < productionCells.length; c++) {
+					String cell = cleanHtmlSplit(productionCells[c]);
+					List<WikiBuilding> filteredBuildings = null;
+					// If this production requires specific set counts, filter buildings out based
+					// on their name.
+					if (setProduction.containsKey(c)) {
+						// Streams sometimes are weird...
+						final int tmp = c;
+						// TODO: Save number of required set members as integer in building object?
+						// Apply production to all buildings with at least that many set members.
+						filteredBuildings = buildings.stream()
+								.filter(b -> b.getName().contains(" x Set]")
+										&& parseInt(b.getName().split(" \\[")[1].split(" x Set\\]")[0]) >= setProduction
+												.get(tmp))
+								.collect(Collectors.toList());
+					} else {
+						filteredBuildings = buildings;
+					}
+					addProductionToBuildings(filteredBuildings, headings.get(c), cell, multFactor.get(c));
+				}
+				if ((headings.size()) != c) {
+					throw new IllegalArgumentException("Missmatch of headings to production content! " + c);
+				}
+			}
+		}
+		return buildings;
 	}
 
 	/**
