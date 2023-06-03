@@ -40,8 +40,11 @@ public class WebsiteParser {
 	public static final String tableEndTag = "</table>";
 	public static final String tableRowStartTag = "<tr>";
 	public static final String wikiUrl = "https://de.wiki.forgeofempires.com";
+	public static final String specialBuildingsPart = "/index.php?title=Liste_besonderer_Gebäude";
+	public static final String special2BuildingsPart = "/index.php?title=Liste_besonderer_Gebäude_Teil_2";
+	public static final String limitedBuildingsPart = "/index.php?title=Eingeschränkte_Gebäude";
 
-	// TODO: Parse limited buildings page. Maybe even military buildings?
+	// TODO: Parse maybe even military buildings?
 	// TODO: Some hard coded buildings? Like settlement and GEX buildings? Fountain
 	// probabilities?
 	// TODO: Remove WENN from formula in post processing, if every age produces the
@@ -53,7 +56,9 @@ public class WebsiteParser {
 		var buildingUrls = new ArrayList<String>();
 
 		buildingUrls.addAll(getManualEdgeCaseBuildingUrls());
-//		buildingUrls.addAll(getSpecialBuildingUrls());
+		buildingUrls.addAll(getBuildingUrls(specialBuildingsPart));
+//		buildingUrls.addAll(getBuildingUrls(special2BuildingsPart));
+//		buildingUrls.addAll(getBuildingUrls(limitedBuildingsPart));
 
 		for (int i = 0; i < buildingUrls.size(); i++) {
 			List<WikiBuilding> buildings = processBuildingWebSite(buildingUrls.get(i));
@@ -93,12 +98,16 @@ public class WebsiteParser {
 	}
 
 	/**
-	 * @return Urls of all buildings on the special buildings site.
+	 * Get urls for all buildings that can be found in a table on the given url. For
+	 * example {@link WebsiteParser#specialBuildingsPart specialBuildingsPart}
+	 * 
+	 * @param tableUrlPart The part of the url that leads to a table of buildings.
+	 * @return Urls of all buildings on the given buildings site.
 	 */
-	private static List<String> getSpecialBuildingUrls() {
+	private static List<String> getBuildingUrls(String tableUrlPart) {
 		var buildings = new ArrayList<String>();
 		// Fetch the HTML content of the web site.
-		String url = wikiUrl + "/index.php?title=Liste_besonderer_Geb%C3%A4ude";
+		String url = wikiUrl + tableUrlPart;
 		String htmlContent = fetchHtmlContent(url);
 
 		// Parse the table rows within the HTML content
@@ -107,7 +116,6 @@ public class WebsiteParser {
 		String tableHtml = htmlContent.substring(tableStartIndex, tableEndIndex + tableEndTag.length());
 		String[] rows = tableHtml.split(tableRowStartTag);
 
-		// Over 700 buildings in this table.
 		// Iterate over each row, with one building per row.
 		// Skipping the first row which contains headers and first split before content.
 		for (int i = 2; i < rows.length; i++) {
@@ -748,7 +756,7 @@ public class WebsiteParser {
 	 */
 	private static void waitBetweenCalls() {
 		try {
-			Thread.sleep(random.nextLong(500, 1500));
+			Thread.sleep(random.nextLong(1500, 2500));
 		} catch (InterruptedException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
