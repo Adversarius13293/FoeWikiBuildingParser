@@ -4,12 +4,12 @@ public class WikiBuilding {
 
 	// TODO: Is there a fixed order for all that stuff?
 	private String name;
-	private String type;
+	private String type = "";
 	private Street street = Street.UNDEFINED;
-	private String buildTime;
 	// Size 3x4 considered as 3 height and 4 width.
 	private int height;
 	private int width;
+	private String buildTime = "";
 	private String set = "";
 	private int coins24;
 	private int gemsMin24;
@@ -121,14 +121,6 @@ public class WikiBuilding {
 		this.street = street;
 	}
 
-	public String getBuildTime() {
-		return buildTime;
-	}
-
-	public void setBuildTime(String buildTime) {
-		this.buildTime = buildTime;
-	}
-
 	public int getHeight() {
 		return height;
 	}
@@ -143,6 +135,14 @@ public class WikiBuilding {
 
 	public void setWidth(int width) {
 		this.width = width;
+	}
+
+	public String getBuildTime() {
+		return buildTime;
+	}
+
+	public void setBuildTime(String buildTime) {
+		this.buildTime = buildTime;
 	}
 
 	public int getCoins24() {
@@ -378,11 +378,11 @@ public class WikiBuilding {
 
 	@Override
 	public String toString() {
-		return name + "|" + type + "|" + street + "|" + height + "|" + width + "|" + set + "|" + coins24 + "|"
-				+ gemsMin24 + "|" + gemsMax24 + "|" + needsStarting + "|" + happiness + "|" + population + "|"
-				+ attackerAttack + "|" + attackerDefense + "|" + defenderAttack + "|" + defenderDefense + "|" + ranking
-				+ "|" + moneyPercent + "|" + suppliesPercent + "|" + money + "|" + supplies + "|" + guildPower + "|"
-				+ medals + "|" + goods + "|" + guildGoods + "|" + blueprints + "|" + diamonds + "|" + forgePoints + "|"
-				+ units + "|" + specialProduction + "|" + upgradeable + "|" + maxSetMembers;
+		return name + "|" + type + "|" + street + "|" + height + "|" + width + "|" + buildTime + "|" + set + "|"
+				+ coins24 + "|" + gemsMin24 + "|" + gemsMax24 + "|" + needsStarting + "|" + happiness + "|" + population
+				+ "|" + attackerAttack + "|" + attackerDefense + "|" + defenderAttack + "|" + defenderDefense + "|"
+				+ ranking + "|" + moneyPercent + "|" + suppliesPercent + "|" + money + "|" + supplies + "|" + guildPower
+				+ "|" + medals + "|" + goods + "|" + guildGoods + "|" + blueprints + "|" + diamonds + "|" + forgePoints
+				+ "|" + units + "|" + specialProduction + "|" + upgradeable + "|" + maxSetMembers;
 	}
 }

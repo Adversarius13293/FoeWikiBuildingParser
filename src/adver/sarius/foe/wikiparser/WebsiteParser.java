@@ -55,10 +55,10 @@ public class WebsiteParser {
 		var allBuildings = new ArrayList<WikiBuilding>();
 		var buildingUrls = new ArrayList<String>();
 
-		buildingUrls.addAll(getManualEdgeCaseBuildingUrls());
-		buildingUrls.addAll(getBuildingUrls(specialBuildingsPart));
+//		buildingUrls.addAll(getManualEdgeCaseBuildingUrls());
+//		buildingUrls.addAll(getBuildingUrls(specialBuildingsPart));
 //		buildingUrls.addAll(getBuildingUrls(special2BuildingsPart));
-//		buildingUrls.addAll(getBuildingUrls(limitedBuildingsPart));
+		buildingUrls.addAll(getBuildingUrls(limitedBuildingsPart));
 
 		for (int i = 0; i < buildingUrls.size(); i++) {
 			List<WikiBuilding> buildings = processBuildingWebSite(buildingUrls.get(i));
@@ -94,6 +94,10 @@ public class WebsiteParser {
 		buildings.add(wikiUrl + "/index.php?title=Haus_des_Wolfs");
 		// Set productions in the middle.
 		buildings.add(wikiUrl + "/index.php?title=Lussebullar-Bäckerei");
+		// Limited building.
+		buildings.add(wikiUrl + "/index.php?title=Forge-Brunnen_-_Aktiv");
+		// Limited building with production table in properties table.
+		buildings.add(wikiUrl + "/index.php?title=Kobaltblaue_Lagune_-_Aktiv");
 		return buildings;
 	}
 
@@ -144,6 +148,11 @@ public class WebsiteParser {
 		String buildingHtmlContent = fetchHtmlContent(buildingUrl);
 		String buildingName = buildingHtmlContent.split("<span dir=\"auto\">")[1].split("</span>")[0];
 
+		// Some pages have a table just with the heading "Eigenschaften" followed
+		// directly by a new table with the data like size and street. While other pages
+		// have that in just one table... In that case connect both tables.
+		buildingHtmlContent = buildingHtmlContent.replace("</tbody></table><table><tbody>", "");
+
 		// Starting with the properties table.
 		// Parse the table rows within the linked page
 		int buildingTableStartIndex = buildingHtmlContent.indexOf(tableStartTag);
@@ -164,14 +173,12 @@ public class WebsiteParser {
 
 		String lastHeading = null;
 		requiresPopulation = false;
+		lastAge = "undefined";
 		// Process each cell within the table rows
 		for (String buildingRow : buildingRows) {
 			String[] buildingCells = buildingRow.split("<td");
 
 			for (String cell : buildingCells) {
-				if (cell.isBlank()) {
-					continue;
-				}
 				// Remove HTML tags and trim whitespace from the cell content
 				String cellContent = cleanHtmlSplit(cell);
 				if (cellContent.isBlank()) {
@@ -186,7 +193,6 @@ public class WebsiteParser {
 					// weird.
 					// Also assuming this is the last cell, since lastHeading will be stuck now.
 					if ("1 T.".equals(cellContent)) {
-
 						buildings.forEach(b -> b.setCoins24(parseInt(cleanHtmlSplit(buildingCells[2]))));
 						String[] splitted = cleanHtmlSplit(buildingCells[3]).split(" - ");
 						buildings.forEach(b -> b.setGemsMin24(parseInt(splitted[0])));
@@ -200,7 +206,21 @@ public class WebsiteParser {
 						// Sometimes buildings (like Kloster) have no leading properties text.
 						// Assumes "Art:" as the next column.
 						lastHeading = cellContent;
+					} else if ("Eigenschaften".equals(lastHeading) && cell.contains("<ul>")) {
+						// Process each line of the listing, to find properties lines.
+						String[] listings = cell.split("<li");
+						for (String li : listings) {
+							String liContent = cleanHtmlSplit(li);
+							if (!liContent.isBlank()) {
+								addPropertiesToBuildings(buildings, lastHeading, liContent);
+							}
+						}
+						lastHeading = null;
 					} else {
+						// Unspecific boost. Need to analyze icon and value of data later.
+						if ("Boosts:".equals(lastHeading)) {
+							cellContent = cell;
+						}
 						addPropertiesToBuildings(buildings, lastHeading, cellContent);
 						lastHeading = null;
 					}
@@ -232,7 +252,9 @@ public class WebsiteParser {
 		// Process each cell within the production table rows.
 		for (int r = 1; r < buildingRows.length; r++) {
 			// Get headers. They can be in multiple rows or columns.
-			if (buildingRows[r].contains("<th")) {
+			// Some pages have each age of the specific productions as headers...
+			// So assume we left the headings, as soon as we find some <td.
+			if (buildingRows[r].contains("<th") && !buildingRows[r].contains("<td")) {
 				String[] headerCells = buildingRows[r].split("<th");
 				for (int h = 1; h < headerCells.length; h++) {
 					String cell = headerCells[h];
@@ -349,6 +371,7 @@ public class WebsiteParser {
 							} else {
 								switch (cleanedCell) {
 								case "Zeitalter":
+								case "Punkte":
 									// Assumes the production cells can be filled from left to right.
 									// But ignore if they go over multiple rows.
 									if (headings.size() <= spanningCol) {
@@ -396,8 +419,8 @@ public class WebsiteParser {
 					}
 				}
 			} else {
-				// Not <th, so we are in table data.
-				String[] productionCells = buildingRows[r].split("<td");
+				// Not in header, so we are in table data, even with <th.
+				String[] productionCells = buildingRows[r].split("<td|<th");
 				lastAge = "undefined";
 				int c;
 				for (c = 1; c < productionCells.length; c++) {
@@ -505,7 +528,7 @@ public class WebsiteParser {
 	 * @return The text content of the html without any tags.
 	 */
 	private static String cleanHtmlSplit(String cell) {
-		if (!cell.startsWith("<")) {
+		if (!cell.startsWith("<") && !cell.isBlank()) {
 			cell = "<xx" + cell;
 		}
 		return cell.replaceAll("<.*?>", "").trim();
@@ -533,6 +556,7 @@ public class WebsiteParser {
 			break;
 		case "happiness":
 		case "happiness_amount":
+		case "Zufriedenheit:":
 			buildings.forEach(
 					b -> b.setHappiness(buildFormulaString(lastAge, b.getHappiness(), parseInt(data), factor)));
 			break;
@@ -546,6 +570,7 @@ public class WebsiteParser {
 			}
 			break;
 		case "rank":
+		case "Punkte":
 			buildings.forEach(b -> b.setRanking(buildFormulaString(lastAge, b.getRanking(), parseInt(data), factor)));
 			break;
 		case "def_boost_attacker":
@@ -614,8 +639,14 @@ public class WebsiteParser {
 					b -> b.setGuildGoods(buildFormulaString(lastAge, b.getGuildGoods(), parseInt(data), factor)));
 			break;
 		case "strategy_points":
+		case "Forge-Punkte":
 			buildings.forEach(
 					b -> b.setForgePoints(buildFormulaString(lastAge, b.getForgePoints(), parseInt(data), factor)));
+			break;
+		case "forge_points_production":
+			// For now as special production, since its only one building.
+			buildings.forEach(
+					b -> b.appendSpecialProduction(converDoubleToString(parseInt(data) * factor) + "% FP Bonus"));
 			break;
 		case "military":
 			buildings.forEach(b -> b.setUnits(buildFormulaString(lastAge, b.getUnits(), parseInt(data), factor)));
@@ -713,13 +744,36 @@ public class WebsiteParser {
 	private static void addPropertiesToBuildings(List<WikiBuilding> buildings, String dataType, String data) {
 		switch (dataType) {
 		case "Eigenschaften":
-			if (data.contains("wenn verbunden")) {
+			switch (data) {
+			case "Gibt dem ersten Gebäude desselben Sets zusätzliche Produktionen , wenn verbunden":
 				buildings.forEach(b -> b.setNeedsStarting(true));
+				break;
+			case "Erhält zusätzliche Produktionen, wenn andere Gebäude desselben Sets  damit verbunden sind":
+				// TODO: Also mark chain start buildings?
+			case "Zusätzliche Produktion bei Platzierung neben anderen einzigartigen Gebäuden desselben Sets":
+			case "Basisproduktion wird verdoppelt, wenn es motiviert ist. Kann geplündert werden, wenn es nicht motiviert ist":
+			case "Renovierungs-Kit zur Verbesserung auf aktuelles Zeitalter nötig":
+			case "Plus-Eins-Kit zur Verbesserung auf nächstes Zeitalter nötig":
+			case "Kann mit  Einlagerungs-Kit im Inventar verstaut werden":
+			case "Automatische Verbesserung zu deinem aktuellen Zeitalter":
+			case "Kann poliert werden. Hält 12 Std.":
+			case "Kann nicht geplündert oder motiviert werden":
+				// TODO: Add plunder to building stats?
+			case "Kann geplündert werden (kann nicht motiviert werden)":
+			case "Boosts durch Zufriedenheit/Legendäre Bauwerke beeinflussen nur Münz- und Vorratsproduktion":
+			case "Zufriedenheit wird verdoppelt, wenn es poliert ist":
+				// Ignore.
+				break;
+			default:
+				if (data.contains("verbessert dieses Gebäude zu")) {
+					buildings.forEach(b -> b.setUpgradeable(true));
+				} else if (data.startsWith("Dieses Gebäude wird nach") && data.endsWith("herabgestuft.")) {
+					buildings.forEach(b -> b.appendSpecialProduction("Eingeschränkte Produktion: "
+							+ data.split("Dieses Gebäude wird nach ")[1].split(" auf")[0]));
+				} else {
+					throw new IllegalArgumentException("Unexpected properties: " + data);
+				}
 			}
-			if (data.contains("verbessert dieses Gebäude zu")) {
-				buildings.forEach(b -> b.setUpgradeable(true));
-			}
-			// TODO: Also mark chain start buildings?
 			break;
 		case "Art:":
 			buildings.forEach(b -> b.setType(data));
@@ -739,6 +793,25 @@ public class WebsiteParser {
 			// specific order.
 		case "Set:":
 			buildings.forEach(b -> b.setSet(data));
+			break;
+		case "Boosts:":
+			var tmpDataType = getImageText(data);
+			var tmpData = cleanHtmlSplit(data);
+			addProductionToBuildings(buildings, tmpDataType, tmpData, 1);
+			break;
+		case "Zufriedenheit:":
+			addProductionToBuildings(buildings, dataType, data, 1);
+			break;
+		case "Bauzeit:":
+			buildings.forEach(b -> b.setBuildTime(data));
+			break;
+		case "Verbesserte Sammlung:":
+			buildings.forEach(b -> b.appendSpecialProduction(data));
+			break;
+		case "1 T. Produktion:":
+			// Only tested for one entry. Seems to be a table inside that cell.
+			int indexSpace = data.indexOf(' ');
+			addProductionToBuildings(buildings, data.substring(indexSpace).trim(), data.substring(0, indexSpace), 1);
 			break;
 		case "Einheitenkosten:":
 		case "Slot-Kosten:":
