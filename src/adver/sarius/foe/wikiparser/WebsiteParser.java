@@ -39,10 +39,10 @@ public class WebsiteParser {
 	public static final String tableStartTag = "<table";
 	public static final String tableEndTag = "</table>";
 	public static final String tableRowStartTag = "<tr>";
-	public static final String wikiUrl = "https://de.wiki.forgeofempires.com";
-	public static final String specialBuildingsPart = "/index.php?title=Liste_besonderer_Gebäude";
-	public static final String special2BuildingsPart = "/index.php?title=Liste_besonderer_Gebäude_Teil_2";
-	public static final String limitedBuildingsPart = "/index.php?title=Eingeschränkte_Gebäude";
+	public static final String wikiUrl = "https://de.wiki.forgeofempires.com/index.php?title=";
+	public static final String specialBuildingsPage = "Liste_besonderer_Gebäude";
+	public static final String special2BuildingsPage = "Liste_besonderer_Gebäude_Teil_2";
+	public static final String limitedBuildingsPage = "Eingeschränkte_Gebäude";
 
 	// TODO: Parse maybe even military buildings?
 	// TODO: Some hard coded buildings? Like settlement and GEX buildings? Fountain
@@ -55,10 +55,10 @@ public class WebsiteParser {
 		var allBuildings = new ArrayList<WikiBuilding>();
 		var buildingUrls = new ArrayList<String>();
 
-//		buildingUrls.addAll(getManualEdgeCaseBuildingUrls());
+		buildingUrls.addAll(getManualEdgeCaseBuildingUrls());
 //		buildingUrls.addAll(getBuildingUrls(specialBuildingsPart));
 //		buildingUrls.addAll(getBuildingUrls(special2BuildingsPart));
-		buildingUrls.addAll(getBuildingUrls(limitedBuildingsPart));
+		buildingUrls.addAll(getBuildingUrls(limitedBuildingsPage));
 
 		for (int i = 0; i < buildingUrls.size(); i++) {
 			List<WikiBuilding> buildings = processBuildingWebSite(buildingUrls.get(i));
@@ -79,31 +79,31 @@ public class WebsiteParser {
 	private static List<String> getManualEdgeCaseBuildingUrls() {
 		var buildings = new ArrayList<String>();
 		// Percentages with random production.
-		buildings.add(wikiUrl + "/index.php?title=Druidentempel_-_St._10");
+		buildings.add(wikiUrl + "Druidentempel_-_St._10");
 		// No properties text.
-		buildings.add(wikiUrl + "/index.php?title=Kloster");
+		buildings.add(wikiUrl + "Kloster");
 		// Upgradeable, no age column.
-		buildings.add(wikiUrl + "/index.php?title=Agenten-Versteck");
+		buildings.add(wikiUrl + "Agenten-Versteck");
 		// Production building, requires population.
-		buildings.add(wikiUrl + "/index.php?title=Aviarium");
+		buildings.add(wikiUrl + "Aviarium");
 		// PRoduces special military unit.
-		buildings.add(wikiUrl + "/index.php?title=Fahnenwachen-Camp");
+		buildings.add(wikiUrl + "Fahnenwachen-Camp");
 		// Chain building.
-		buildings.add(wikiUrl + "/index.php?title=Fischerpier");
+		buildings.add(wikiUrl + "Fischerpier");
 		// Negative happiness value.
-		buildings.add(wikiUrl + "/index.php?title=Haus_des_Wolfs");
+		buildings.add(wikiUrl + "Haus_des_Wolfs");
 		// Set productions in the middle.
-		buildings.add(wikiUrl + "/index.php?title=Lussebullar-Bäckerei");
+		buildings.add(wikiUrl + "Lussebullar-Bäckerei");
 		// Limited building.
-		buildings.add(wikiUrl + "/index.php?title=Forge-Brunnen_-_Aktiv");
+		buildings.add(wikiUrl + "Forge-Brunnen_-_Aktiv");
 		// Limited building with production table in properties table.
-		buildings.add(wikiUrl + "/index.php?title=Kobaltblaue_Lagune_-_Aktiv");
+		buildings.add(wikiUrl + "Kobaltblaue_Lagune_-_Aktiv");
 		return buildings;
 	}
 
 	/**
 	 * Get urls for all buildings that can be found in a table on the given url. For
-	 * example {@link WebsiteParser#specialBuildingsPart specialBuildingsPart}
+	 * example {@link WebsiteParser#specialBuildingsPage specialBuildingsPart}
 	 * 
 	 * @param tableUrlPart The part of the url that leads to a table of buildings.
 	 * @return Urls of all buildings on the given buildings site.
@@ -125,7 +125,7 @@ public class WebsiteParser {
 		for (int i = 2; i < rows.length; i++) {
 			// Extract the building sub page
 			String[] cells = rows[i].split("<td");
-			String buildingLink = cells[2].split("href=\"")[1].split("\"")[0];
+			String buildingLink = cells[2].split("title=")[1].split("\"")[0];
 
 			String buildingUrl = wikiUrl + buildingLink;
 			buildings.add(buildingUrl);
