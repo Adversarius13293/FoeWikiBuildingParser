@@ -54,7 +54,7 @@ public class WebsiteParser {
 
 //		for (int i = 0; i < buildingUrls.size(); i++) {
 		for (int i = 0; i < 5; i++) {
-			List<WikiBuilding> buildings = processBuildingWebSite("TODO", buildingUrls.get(i));
+			List<WikiBuilding> buildings = processBuildingWebSite(buildingUrls.get(i));
 			// For easier debugging. Output each building when processed, include its row.
 			final int temp = i;
 			buildings.forEach(b -> System.out.println(temp + ": " + b.toString()));
@@ -95,20 +95,19 @@ public class WebsiteParser {
 		return buildings;
 	}
 
-	// TODO: Parse building name from inside the method.
 	/**
 	 * Parse the html web site from the given url, and extract all relevant
 	 * informations.
 	 * 
-	 * @param buildingName Name of the building.
-	 * @param buildingUrl  Url of the building's detail page.
+	 * @param buildingUrl Url of the building's detail page.
 	 * @return All buildings created from that page. Set-productions create
 	 *         additional building entries.
 	 * @throws IOException
 	 */
-	private static List<WikiBuilding> processBuildingWebSite(String buildingName, String buildingUrl) {
+	private static List<WikiBuilding> processBuildingWebSite(String buildingUrl) {
 		// Fetch the linked page for each building
 		String buildingHtmlContent = fetchHtmlContent(buildingUrl);
+		String buildingName = buildingHtmlContent.split("<span dir=\"auto\">")[1].split("</span>")[0];
 
 		// Starting with the properties table.
 		// Parse the table rows within the linked page
