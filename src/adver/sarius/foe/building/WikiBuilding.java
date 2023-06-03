@@ -42,6 +42,8 @@ public class WikiBuilding {
 	// Not reliable. Some buildings can be upgraded with special kit, which is not
 	// listed on the buildings page. But if it's set to true, its probably true.
 	private boolean upgradeable = false;
+	/** True if this building has all the set-bonus productions. */
+	private boolean maxSetMembers = true;
 	// Some productions need to be motivated. But not all, which makes it hard to
 	// factor in and display correctly. So just assume everything is motivated
 	// anyways.
@@ -87,6 +89,7 @@ public class WikiBuilding {
 		this.units = toClone.units;
 		this.specialProduction = toClone.specialProduction;
 		this.upgradeable = toClone.upgradeable;
+		this.maxSetMembers = toClone.maxSetMembers;
 	}
 
 	public WikiBuilding(WikiBuilding toClone, String appendName) {
@@ -365,6 +368,14 @@ public class WikiBuilding {
 		this.upgradeable = upgradeable;
 	}
 
+	public boolean isMaxSetMembers() {
+		return maxSetMembers;
+	}
+
+	public void setMaxSetMembers(boolean maxSetMembers) {
+		this.maxSetMembers = maxSetMembers;
+	}
+
 	@Override
 	public String toString() {
 		return name + "|" + type + "|" + street + "|" + height + "|" + width + "|" + set + "|" + coins24 + "|"
@@ -372,12 +383,6 @@ public class WikiBuilding {
 				+ attackerAttack + "|" + attackerDefense + "|" + defenderAttack + "|" + defenderDefense + "|" + ranking
 				+ "|" + moneyPercent + "|" + suppliesPercent + "|" + money + "|" + supplies + "|" + guildPower + "|"
 				+ medals + "|" + goods + "|" + guildGoods + "|" + blueprints + "|" + diamonds + "|" + forgePoints + "|"
-				+ units + "|" + specialProduction + "|" + upgradeable;
+				+ units + "|" + specialProduction + "|" + upgradeable + "|" + maxSetMembers;
 	}
-
-	// TODO: Non-24 hour productions.
-	// TODO: Kaputte fragment-chancen?
-	// https://de.wiki.forgeofempires.com/index.php?title=Druidenh%C3%BCtte_-_St._9
-	// TODO: Einige Gebäude haben nicht angegeben, dass sie eine Straße benötigen??
-
 }

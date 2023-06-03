@@ -11,6 +11,7 @@ import java.text.DecimalFormatSymbols;
 import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -49,6 +50,8 @@ public class WebsiteParser {
 	// probabilities?
 	// TODO: Remove WENN from formula in post processing, if every age produces the
 	// same?
+	// TODO: Broken fragment chances?
+	// https://de.wiki.forgeofempires.com/index.php?title=Druidenh%C3%BCtte_-_St._9
 	public static void main(String[] args) {
 		var building = new WikiBuilding();
 		try {
@@ -252,8 +255,12 @@ public class WebsiteParser {
 									// BuildingName [2 x Set]
 									buildings.add(new WikiBuilding(building, " [" + cleanedCell + " Set]"));
 								}
-								// Assuming there are no 0x header entries.
+								// Assuming there are no less than 1x header entries.
 								setProduction.put(spanningCol, parseInt(cleanedCell));
+								int maxSets = setProduction.values().stream().max(Integer::compare).get();
+								String maxSetsName = building.getName() + " [" + maxSets + " x Set]";
+								// Recalculate highest set building after adding a new entry.
+								buildings.forEach(b -> b.setMaxSetMembers(maxSetsName.equals(b.getName())));
 							} else if (cleanedCell.matches("[0-9]+%")) {
 								// Production chance.
 								multFactor.put(spanningCol,
@@ -397,8 +404,7 @@ public class WebsiteParser {
 	 */
 	private static void outputBuildings(List<WikiBuilding> buildings) {
 		// Modify here to change what buildings should be printed out.
-		// TODO: Somehow filter out set-production buildings and only keep the max.
-		buildings.stream().filter(b -> !b.isUpgradeable()).forEach(System.out::println);
+		buildings.stream().filter(b -> !b.isUpgradeable()).filter(WikiBuilding::isMaxSetMembers).forEach(System.out::println);
 	}
 
 	/**
