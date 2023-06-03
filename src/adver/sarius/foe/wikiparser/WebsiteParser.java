@@ -50,10 +50,12 @@ public class WebsiteParser {
 	// https://de.wiki.forgeofempires.com/index.php?title=Druidenh%C3%BCtte_-_St._9
 	public static void main(String[] args) {
 		var allBuildings = new ArrayList<WikiBuilding>();
-		var buildingUrls = getSpecialBuildingUrls();
+		var buildingUrls = new ArrayList<String>();
 
-//		for (int i = 0; i < buildingUrls.size(); i++) {
-		for (int i = 0; i < 5; i++) {
+		buildingUrls.addAll(getManualEdgeCaseBuildingUrls());
+//		buildingUrls.addAll(getSpecialBuildingUrls());
+
+		for (int i = 0; i < buildingUrls.size(); i++) {
 			List<WikiBuilding> buildings = processBuildingWebSite(buildingUrls.get(i));
 			// For easier debugging. Output each building when processed, include its row.
 			final int temp = i;
@@ -64,6 +66,30 @@ public class WebsiteParser {
 		// No real need to filter out buildings afterwards? Can just do that in the
 		// resulting document itself.
 //			outputBuildings(allBuildings);
+	}
+
+	/**
+	 * @return Urls of manually selected buildings that tend to make problems.
+	 */
+	private static List<String> getManualEdgeCaseBuildingUrls() {
+		var buildings = new ArrayList<String>();
+		// Percentages with random production.
+		buildings.add(wikiUrl + "/index.php?title=Druidentempel_-_St._10");
+		// No properties text.
+		buildings.add(wikiUrl + "/index.php?title=Kloster");
+		// Upgradeable, no age column.
+		buildings.add(wikiUrl + "/index.php?title=Agenten-Versteck");
+		// Production building, requires population.
+		buildings.add(wikiUrl + "/index.php?title=Aviarium");
+		// PRoduces special military unit.
+		buildings.add(wikiUrl + "/index.php?title=Fahnenwachen-Camp");
+		// Chain building.
+		buildings.add(wikiUrl + "/index.php?title=Fischerpier");
+		// Negative happiness value.
+		buildings.add(wikiUrl + "/index.php?title=Haus_des_Wolfs");
+		// Set productions in the middle.
+		buildings.add(wikiUrl + "/index.php?title=Lussebullar-Bäckerei");
+		return buildings;
 	}
 
 	/**
@@ -95,6 +121,7 @@ public class WebsiteParser {
 		return buildings;
 	}
 
+	// TODO: Split up this method even more, still convoluted.
 	/**
 	 * Parse the html web site from the given url, and extract all relevant
 	 * informations.
