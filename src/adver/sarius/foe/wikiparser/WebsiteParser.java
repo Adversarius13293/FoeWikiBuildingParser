@@ -5,20 +5,14 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.URL;
 import java.net.URLConnection;
-import java.nio.file.DirectoryStream.Filter;
 import java.text.DecimalFormat;
 import java.text.DecimalFormatSymbols;
-import java.text.NumberFormat;
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Random;
-import java.util.Set;
 import java.util.stream.Collectors;
 
 import adver.sarius.foe.building.Street;
@@ -44,6 +38,8 @@ public class WebsiteParser {
 
 	public static final String tableStartTag = "<table";
 	public static final String tableEndTag = "</table>";
+	public static final String tableRowStartTag = "<tr>";
+	public static final String wikiUrl = "https://de.wiki.forgeofempires.com";
 
 	// TODO: Parse limited buildings page. Maybe even military buildings?
 	// TODO: Some hard coded buildings? Like settlement and GEX buildings? Fountain
@@ -53,47 +49,50 @@ public class WebsiteParser {
 	// TODO: Broken fragment chances?
 	// https://de.wiki.forgeofempires.com/index.php?title=Druidenh%C3%BCtte_-_St._9
 	public static void main(String[] args) {
-		var building = new WikiBuilding();
-		try {
-			// Fetch the HTML content of the web site.
-			String url = "https://de.wiki.forgeofempires.com/index.php?title=Liste_besonderer_Geb%C3%A4ude";
-			String htmlContent = fetchHtmlContent(url);
+		var allBuildings = new ArrayList<WikiBuilding>();
+		var buildingUrls = getSpecialBuildingUrls();
 
-			// Parse the table rows within the HTML content
-			int tableStartIndex = htmlContent.indexOf(tableStartTag);
-			int tableEndIndex = htmlContent.indexOf(tableEndTag, tableStartIndex);
-			String tableHtml = htmlContent.substring(tableStartIndex, tableEndIndex + tableEndTag.length());
-			String[] rows = tableHtml.split("<tr>");
-
-			List<WikiBuilding> allBuildings = new ArrayList<>();
-
-			// Over 700 buildings in the table.
-			// Iterate over each row, with one building per row.
-			// Skipping the first row which contains headers.
-			for (int i = 2; i < rows.length; i++) {
-//			for (int i = 2; i < 5; i++) {
-				String row = rows[i];
-
-				// Extract the building sub page
-				String[] cells = row.split("<td");
-				String buildingLink = cells[2].split("href=\"")[1].split("\"")[0];
-				String buildingName = cells[2].split("\">")[1].split("</a>")[0];
-
-				String buildingUrl = "https://de.wiki.forgeofempires.com" + buildingLink;
-				List<WikiBuilding> buildings = processBuildingWebSite(buildingName, buildingUrl);
-				// For easier debugging. Output each building when processed, include its row.
-				final int temp = i;
-				buildings.forEach(b -> System.out.println(temp + ": " + b.toString()));
-				allBuildings.addAll(buildings);
-			}
-			System.out.println("Done");
-			// No real need to filter out buildings afterwards? Can just do that in the
-			// resulting document itself.
-//			outputBuildings(allBuildings);
-		} catch (Exception e) {
-			System.out.println("Exception with building: " + building.getName());
-			e.printStackTrace();
+//		for (int i = 0; i < buildingUrls.size(); i++) {
+		for (int i = 0; i < 5; i++) {
+			List<WikiBuilding> buildings = processBuildingWebSite("TODO", buildingUrls.get(i));
+			// For easier debugging. Output each building when processed, include its row.
+			final int temp = i;
+			buildings.forEach(b -> System.out.println(temp + ": " + b.toString()));
+			allBuildings.addAll(buildings);
 		}
+		System.out.println("Done");
+		// No real need to filter out buildings afterwards? Can just do that in the
+		// resulting document itself.
+//			outputBuildings(allBuildings);
+	}
+
+	/**
+	 * @return Urls of all buildings on the special buildings site.
+	 */
+	private static List<String> getSpecialBuildingUrls() {
+		var buildings = new ArrayList<String>();
+		// Fetch the HTML content of the web site.
+		String url = wikiUrl + "/index.php?title=Liste_besonderer_Geb%C3%A4ude";
+		String htmlContent = fetchHtmlContent(url);
+
+		// Parse the table rows within the HTML content
+		int tableStartIndex = htmlContent.indexOf(tableStartTag);
+		int tableEndIndex = htmlContent.indexOf(tableEndTag, tableStartIndex);
+		String tableHtml = htmlContent.substring(tableStartIndex, tableEndIndex + tableEndTag.length());
+		String[] rows = tableHtml.split(tableRowStartTag);
+
+		// Over 700 buildings in this table.
+		// Iterate over each row, with one building per row.
+		// Skipping the first row which contains headers and first split before content.
+		for (int i = 2; i < rows.length; i++) {
+			// Extract the building sub page
+			String[] cells = rows[i].split("<td");
+			String buildingLink = cells[2].split("href=\"")[1].split("\"")[0];
+
+			String buildingUrl = wikiUrl + buildingLink;
+			buildings.add(buildingUrl);
+		}
+		return buildings;
 	}
 
 	// TODO: Parse building name from inside the method.
@@ -107,8 +106,7 @@ public class WebsiteParser {
 	 *         additional building entries.
 	 * @throws IOException
 	 */
-	private static List<WikiBuilding> processBuildingWebSite(String buildingName, String buildingUrl)
-			throws IOException {
+	private static List<WikiBuilding> processBuildingWebSite(String buildingName, String buildingUrl) {
 		// Fetch the linked page for each building
 		String buildingHtmlContent = fetchHtmlContent(buildingUrl);
 
@@ -121,7 +119,7 @@ public class WebsiteParser {
 		int buildingTableEndIndex = buildingHtmlContent.indexOf(tableEndTag, buildingTableStartIndex);
 		String buildingTableHtml = buildingHtmlContent.substring(buildingTableStartIndex,
 				buildingTableEndIndex + tableEndTag.length());
-		String[] buildingRows = buildingTableHtml.split("<tr>");
+		String[] buildingRows = buildingTableHtml.split(tableRowStartTag);
 
 		// Some buildings have different production based on set members. Create one
 		// instance for each, which means multiple entries for one page.
@@ -181,7 +179,7 @@ public class WebsiteParser {
 		buildingTableEndIndex = buildingHtmlContent.indexOf(tableEndTag, buildingTableStartIndex);
 		buildingTableHtml = buildingHtmlContent.substring(buildingTableStartIndex,
 				buildingTableEndIndex + tableEndTag.length());
-		buildingRows = buildingTableHtml.split("<tr>");
+		buildingRows = buildingTableHtml.split(tableRowStartTag);
 
 		// Type of production, with same index as the column, starting at 1.
 		List<String> headings = new ArrayList<>();
@@ -404,7 +402,8 @@ public class WebsiteParser {
 	 */
 	private static void outputBuildings(List<WikiBuilding> buildings) {
 		// Modify here to change what buildings should be printed out.
-		buildings.stream().filter(b -> !b.isUpgradeable()).filter(WikiBuilding::isMaxSetMembers).forEach(System.out::println);
+		buildings.stream().filter(b -> !b.isUpgradeable()).filter(WikiBuilding::isMaxSetMembers)
+				.forEach(System.out::println);
 	}
 
 	/**
@@ -737,16 +736,22 @@ public class WebsiteParser {
 	 * @return The html content of the web site.
 	 * @throws IOException
 	 */
-	private static String fetchHtmlContent(String urlString) throws IOException {
-		waitBetweenCalls();
+	private static String fetchHtmlContent(String urlString) {
 		StringBuilder htmlContent = new StringBuilder();
-		URL url = new URL(urlString);
-		URLConnection connection = url.openConnection();
-		try (BufferedReader reader = new BufferedReader(new InputStreamReader(connection.getInputStream()))) {
-			String line;
-			while ((line = reader.readLine()) != null) {
-				htmlContent.append(line);
+		try {
+			waitBetweenCalls();
+			URL url;
+			url = new URL(urlString);
+			URLConnection connection = url.openConnection();
+			try (BufferedReader reader = new BufferedReader(new InputStreamReader(connection.getInputStream()))) {
+				String line;
+				while ((line = reader.readLine()) != null) {
+					htmlContent.append(line);
+				}
 			}
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
 		}
 		return htmlContent.toString();
 	}
