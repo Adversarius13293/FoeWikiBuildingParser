@@ -47,18 +47,22 @@ public class WebsiteParser {
 	// TODO: Parse maybe even military buildings?
 	// TODO: Some hard coded buildings? Like settlement and GEX buildings? Fountain
 	// probabilities?
+	// TODO: Pass down the building type from main table, if available.
 	// TODO: Remove WENN from formula in post processing, if every age produces the
 	// same?
-	// TODO: Broken fragment chances?
-	// https://de.wiki.forgeofempires.com/index.php?title=Druidenh%C3%BCtte_-_St._9
+	// TODO: Differentiate between goods productions? random ones, of one type,
+	// equal of each.
+	// TODO: Which buildings need to be connected to the street for their boosts?
+	// TODO: We are getting more and more fragments. Find a better way than "special
+	// production" to store and display them?
 	public static void main(String[] args) {
 		var allBuildings = new ArrayList<WikiBuilding>();
 		var buildingUrls = new ArrayList<String>();
 
-		buildingUrls.addAll(getManualEdgeCaseBuildingUrls());
-//		buildingUrls.addAll(getBuildingUrls(specialBuildingsPart));
-//		buildingUrls.addAll(getBuildingUrls(special2BuildingsPart));
-		buildingUrls.addAll(getBuildingUrls(limitedBuildingsPage));
+//		buildingUrls.addAll(getManualEdgeCaseBuildingUrls());
+//		buildingUrls.addAll(getBuildingUrls(specialBuildingsPage));
+		buildingUrls.addAll(getBuildingUrls(special2BuildingsPage));
+//		buildingUrls.addAll(getBuildingUrls(limitedBuildingsPage));
 
 		for (int i = 0; i < buildingUrls.size(); i++) {
 			List<WikiBuilding> buildings = processBuildingWebSite(buildingUrls.get(i));
@@ -98,6 +102,11 @@ public class WebsiteParser {
 		buildings.add(wikiUrl + "Forge-Brunnen_-_Aktiv");
 		// Limited building with production table in properties table.
 		buildings.add(wikiUrl + "Kobaltblaue_Lagune_-_Aktiv");
+		// New page layout, multiple boosts, productions, fragments, motivated.
+		buildings.add(wikiUrl + "Chocolaterie_-_St._10");
+		// Multiple random item productions, besides fragments.
+		buildings.add(wikiUrl + "Druidenhütte_-_St._9");
+
 		return buildings;
 	}
 
@@ -152,6 +161,13 @@ public class WebsiteParser {
 		// directly by a new table with the data like size and street. While other pages
 		// have that in just one table... In that case connect both tables.
 		buildingHtmlContent = buildingHtmlContent.replace("</tbody></table><table><tbody>", "");
+		// And some production tables contain multiple tables inside their cell...
+		// Remove new rows, and treat them as line breaks.
+		// Assuming only the inner table data starts exactly like that.
+		buildingHtmlContent = buildingHtmlContent.replace("<tr><td style=\"text-align: center;\">", "<br />");
+		// And there are even completely empty tables inside cells...
+		buildingHtmlContent = buildingHtmlContent
+				.replace("<table style=\"margin: auto; width: 100%\"><tbody><tr><td></td></tr></tbody></table>", "");
 
 		// Starting with the properties table.
 		// Parse the table rows within the linked page
@@ -230,7 +246,8 @@ public class WebsiteParser {
 		// Finished properties table. Now to the age dependent productions.
 
 		buildingTableStartIndex = buildingHtmlContent.indexOf(tableStartTag, buildingTableEndIndex);
-		buildingTableEndIndex = buildingHtmlContent.indexOf(tableEndTag, buildingTableStartIndex);
+		// Assuming its the last table on the page. To skip over tables inside of cells.
+		buildingTableEndIndex = buildingHtmlContent.lastIndexOf(tableEndTag);
 		buildingTableHtml = buildingHtmlContent.substring(buildingTableStartIndex,
 				buildingTableEndIndex + tableEndTag.length());
 		buildingRows = buildingTableHtml.split(tableRowStartTag);
@@ -238,7 +255,7 @@ public class WebsiteParser {
 		// Type of production, with same index as the column, starting at 1.
 		List<String> headings = new ArrayList<>();
 		headings.add("dummyIndex");
-		// TODO: Used for percentage and non-24 hour productions.
+		// Used for percentage and non-24 hour productions.
 		Map<Integer, Double> multFactor = new HashMap<>();
 
 		// Marks specific columns for specific amounts of set members. Key is the
@@ -315,6 +332,18 @@ public class WebsiteParser {
 								String maxSetsName = building.getName() + " [" + maxSets + " x Set]";
 								// Recalculate highest set building after adding a new entry.
 								buildings.forEach(b -> b.setMaxSetMembers(maxSetsName.equals(b.getName())));
+							} else if (cell.contains("<img ") && cleanedCell.equals("1 T. Produktion")) {
+								// New layout, all the production in one cell as a sub-table.
+								// Could run it through the img branch, but not sure if there will be other
+								// cases with non-1T productions, which use the same icon.
+								// TODO: Maybe skip the img branch if cell contains text?
+								if (headings.size() <= spanningCol) {
+									if (headings.size() != spanningCol) {
+										throw new IllegalArgumentException(
+												"Unexpected order of headings: " + spanningCol);
+									}
+									headings.add(cleanedCell);
+								}
 							} else if (cleanedCell.matches("[0-9]+%")) {
 								// Production chance.
 								multFactor.put(spanningCol,
@@ -372,6 +401,8 @@ public class WebsiteParser {
 								switch (cleanedCell) {
 								case "Zeitalter":
 								case "Punkte":
+								case "Boosts":
+								case "Zufriedenheit":
 									// Assumes the production cells can be filled from left to right.
 									// But ignore if they go over multiple rows.
 									if (headings.size() <= spanningCol) {
@@ -405,8 +436,18 @@ public class WebsiteParser {
 								case "Folgendes wird zufällig produziert:":
 									buildings.forEach(b -> b.appendSpecialProduction("Zufallsproduktion!"));
 									break;
-								case "wenn motiviert":
 								case "Liefert":
+									// Only ignore sometimes...
+									// Assuming only multi-column heading needs to be ignored.
+									if (colspan == 1 && headings.size() <= spanningCol) {
+										if (headings.size() != spanningCol) {
+											throw new IllegalArgumentException(
+													"Unexpected order of headings: " + spanningCol);
+										}
+										headings.add(cleanedCell);
+									}
+									break;
+								case "wenn motiviert":
 								case "Produziert":
 								case "":
 									// Ignore.
@@ -424,7 +465,6 @@ public class WebsiteParser {
 				lastAge = "undefined";
 				int c;
 				for (c = 1; c < productionCells.length; c++) {
-					String cell = cleanHtmlSplit(productionCells[c]);
 					List<WikiBuilding> filteredBuildings = null;
 					// If this production requires specific set counts, filter buildings out based
 					// on their name.
@@ -441,7 +481,42 @@ public class WebsiteParser {
 					} else {
 						filteredBuildings = buildings;
 					}
-					addProductionToBuildings(filteredBuildings, headings.get(c), cell, multFactor.get(c));
+					String heading = headings.get(c);
+
+					// Some cells contain multiple lines and bonuses.
+					if ("Boosts".equals(heading) || "1 T. Produktion".equals(heading) || "Liefert".equals(heading)) {
+						// And sometimes even multiple bonuses in one line, so add line break.
+						// Split without closing tag. so the clean-method can add an opening tag.
+						String[] splitted = productionCells[c].replace(", ", "<br />").split("<br ");
+						for (String s : splitted) {
+							if (cleanHtmlSplit(s).isBlank() || "Wenn motiviert:".equals(cleanHtmlSplit(s))) {
+								// All this replacing parts of the inner table with line breaks may lead to
+								// empty entries. Assuming images without text aren't data.
+								continue;
+							}
+							if (s.contains("<img ")) {
+								// Take table heading, but can overwrite by image text if an image was found.
+								heading = getImageText(s);
+							} else {
+								// Reset heading in case one of the lines does not have an image.
+								heading = headings.get(c);
+							}
+							if ("Zufällig 🪄".equals(cleanHtmlSplit(s))) {
+								buildings.forEach(b -> b.appendSpecialProduction("Zufallsproduktion!"));
+							} else {
+								addProductionToBuildings(filteredBuildings, heading, cleanHtmlSplit(s),
+										multFactor.get(c));
+							}
+						}
+					} else {
+						// Probably could run everything through the upper part. But then cells with
+						// proper heading and images in cell would only take the image as heading. Not
+						// quite sure if every image is only used for exactly one effect. Especially in
+						// the first table with building time and stuff.
+						addProductionToBuildings(filteredBuildings, heading, cleanHtmlSplit(productionCells[c]),
+								multFactor.get(c));
+					}
+
 				}
 				if ((headings.size()) != c) {
 					throw new IllegalArgumentException("Missmatch of headings to production content! " + c);
@@ -498,7 +573,7 @@ public class WebsiteParser {
 	 */
 	private static String getImageText(String cell) {
 		if (cell.contains("<img ")) {
-			return cell.split("alt=\"")[1].split("-")[0];
+			return cell.split("alt=\"")[1].split("[-.]")[0];
 		} else {
 			return null;
 		}
@@ -516,7 +591,7 @@ public class WebsiteParser {
 		// Replaces double dash with single dash. Since assuming the goal is to have it
 		// negative, and not to invert it.
 		return Integer.parseInt(intString.replace("%", "").replace(" x", "").replace(" Min.", "").replace(" Std.", "")
-				.replace(" T.", "").replace(".", "").replace("--", "-"));
+				.replace(" T.", "").replace(".", "").replace("+", "").replace("--", "-").trim());
 	}
 
 	/**
@@ -556,17 +631,18 @@ public class WebsiteParser {
 			break;
 		case "happiness":
 		case "happiness_amount":
+		case "Zufriedenheit":
 		case "Zufriedenheit:":
 			buildings.forEach(
 					b -> b.setHappiness(buildFormulaString(lastAge, b.getHappiness(), parseInt(data), factor)));
 			break;
 		case "population":
 			if (requiresPopulation) {
-				buildings.forEach(b -> b
-						.setPopulation(buildFormulaString(lastAge, b.getPopulation(), parseInt("-" + data), factor)));
+				buildings.forEach(b -> b.setPopulation(buildFormulaString(lastAge, b.getPopulation(),
+						parseInt("-" + data.replace("Bevölkerung", "")), factor)));
 			} else {
-				buildings.forEach(
-						b -> b.setPopulation(buildFormulaString(lastAge, b.getPopulation(), parseInt(data), factor)));
+				buildings.forEach(b -> b.setPopulation(buildFormulaString(lastAge, b.getPopulation(),
+						parseInt(data.replace("Bevölkerung", "")), factor)));
 			}
 			break;
 		case "rank":
@@ -609,17 +685,20 @@ public class WebsiteParser {
 					.setSuppliesPercent(buildFormulaString(lastAge, b.getSuppliesPercent(), parseInt(data), factor)));
 			break;
 		case "money":
-			buildings.forEach(b -> b.setMoney(buildFormulaString(lastAge, b.getMoney(), parseInt(data), factor)));
+			buildings.forEach(b -> b
+					.setMoney(buildFormulaString(lastAge, b.getMoney(), parseInt(data.replace("Münzen", "")), factor)));
 			break;
 		case "supplies":
-			buildings.forEach(b -> b.setSupplies(buildFormulaString(lastAge, b.getSupplies(), parseInt(data), factor)));
+			buildings.forEach(b -> b.setSupplies(
+					buildFormulaString(lastAge, b.getSupplies(), parseInt(data.replace("Vorräte", "")), factor)));
 			break;
 		case "clan_power":
 			buildings.forEach(
 					b -> b.setGuildPower(buildFormulaString(lastAge, b.getGuildPower(), parseInt(data), factor)));
 			break;
 		case "medals":
-			buildings.forEach(b -> b.setMedals(buildFormulaString(lastAge, b.getMedals(), parseInt(data), factor)));
+			buildings.forEach(b -> b.setMedals(
+					buildFormulaString(lastAge, b.getMedals(), parseInt(data.replace("Medaillen", "")), factor)));
 			break;
 		case "blueprint":
 			buildings.forEach(
@@ -631,8 +710,15 @@ public class WebsiteParser {
 		case "goods":
 		case "all_goods_of_age":
 		case "random_good_of_age":
-			// TODO: There should be some buildings that give goods of a different age?
-			buildings.forEach(b -> b.setGoods(buildFormulaString(lastAge, b.getGoods(), parseInt(data), factor)));
+		case "all_goods_of_previous_age":
+		case "random_good_of_previous_age":
+			// TODO: Save different age goods as own value?
+			if (data.startsWith("Gildenkasse: ")) {
+				buildings.forEach(b -> b.setGuildGoods(buildFormulaString(lastAge, b.getGuildGoods(),
+						parseInt(data.replace("Gildenkasse: ", "")), factor)));
+			} else {
+				buildings.forEach(b -> b.setGoods(buildFormulaString(lastAge, b.getGoods(), parseInt(data), factor)));
+			}
 			break;
 		case "icon_great_building_bonus_guild_goods":
 			buildings.forEach(
@@ -640,8 +726,9 @@ public class WebsiteParser {
 			break;
 		case "strategy_points":
 		case "Forge-Punkte":
-			buildings.forEach(
-					b -> b.setForgePoints(buildFormulaString(lastAge, b.getForgePoints(), parseInt(data), factor)));
+			// Sometimes the data contains number, icon, and text all at once.
+			buildings.forEach(b -> b.setForgePoints(buildFormulaString(lastAge, b.getForgePoints(),
+					parseInt(data.replace("Forge-Punkte", "")), factor)));
 			break;
 		case "forge_points_production":
 			// For now as special production, since its only one building.
@@ -649,7 +736,10 @@ public class WebsiteParser {
 					b -> b.appendSpecialProduction(converDoubleToString(parseInt(data) * factor) + "% FP Bonus"));
 			break;
 		case "military":
-			buildings.forEach(b -> b.setUnits(buildFormulaString(lastAge, b.getUnits(), parseInt(data), factor)));
+			// Sometimes can be written in a weird form.
+			// TODO: Remove regex replace once bug report is implemented.
+			buildings.forEach(b -> b.setUnits(buildFormulaString(lastAge, b.getUnits(),
+					parseInt(data.replace("zufällige Einheit", "").replaceAll("^0x ", "")), factor)));
 			break;
 		case "armyuniticons_90x90_rogue":
 			// Assuming the age can be ignored here.
@@ -669,6 +759,19 @@ public class WebsiteParser {
 			// Assuming the age can be ignored here.
 			buildings.forEach(
 					b -> b.appendSpecialProduction(converDoubleToString(parseInt(data) * factor) + "x Trommler"));
+			break;
+		case "icon_fragment":
+		case "boost_coins_large":
+		case "rush_mass_coins_medium":
+		case "dead_man_stash":
+		case "buccaneer":
+			// TODO: Find a safe way to automatically apply this to all upcoming items.
+			// Since special production is not age dependent, its hard to properly display
+			// multiple fragments from one age, and also from different ages.
+			// Assuming production is the same for every age.
+			// So force append for first age, in case the same fragment can be produces from
+			// normal and from motivated production.
+			buildings.forEach(b -> b.appendSpecialProduction(data, "Bronzezeit".equals(lastAge)));
 			break;
 		default:
 			throw new IllegalArgumentException("Unexpected type: " + dataType);
@@ -757,6 +860,7 @@ public class WebsiteParser {
 			case "Kann mit  Einlagerungs-Kit im Inventar verstaut werden":
 			case "Automatische Verbesserung zu deinem aktuellen Zeitalter":
 			case "Kann poliert werden. Hält 12 Std.":
+			case "Kann motiviert werden":
 			case "Kann nicht geplündert oder motiviert werden":
 				// TODO: Add plunder to building stats?
 			case "Kann geplündert werden (kann nicht motiviert werden)":
@@ -778,6 +882,7 @@ public class WebsiteParser {
 		case "Art:":
 			buildings.forEach(b -> b.setType(data));
 			break;
+		case "Benötigte Straße:":
 		case "Straße:":
 			buildings.forEach(b -> b.setStreet(Street.fromString(data)));
 			break;

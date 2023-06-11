@@ -352,12 +352,23 @@ public class WikiBuilding {
 	 * @param append String to append.
 	 */
 	public void appendSpecialProduction(String append) {
+		appendSpecialProduction(append, false);
+	}
+	
+	/**
+	 * Append the special production by the given string. Will put delimiter between
+	 * appends.
+	 * 
+	 * @param append       String to append.
+	 * @param alwaysAppend True to always append, false to only append if string is
+	 *                     not present yet.
+	 */
+	public void appendSpecialProduction(String append, boolean alwaysAppend) {
 		if (this.specialProduction == null || this.specialProduction.isEmpty()) {
 			this.specialProduction = append;
-		} else if (!this.specialProduction.contains(append)) {
+		} else if (alwaysAppend || !this.specialProduction.contains(append)) {
 			this.specialProduction = this.specialProduction + ";" + append;
 		}
-
 	}
 
 	public boolean isUpgradeable() {
