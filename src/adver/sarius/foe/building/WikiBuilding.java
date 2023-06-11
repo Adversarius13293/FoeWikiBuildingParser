@@ -354,7 +354,7 @@ public class WikiBuilding {
 	public void appendSpecialProduction(String append) {
 		appendSpecialProduction(append, false);
 	}
-	
+
 	/**
 	 * Append the special production by the given string. Will put delimiter between
 	 * appends.

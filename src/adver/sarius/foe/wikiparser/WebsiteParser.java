@@ -13,6 +13,8 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Random;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import adver.sarius.foe.building.Street;
@@ -68,6 +70,7 @@ public class WebsiteParser {
 			List<WikiBuilding> buildings = processBuildingWebSite(buildingUrls.get(i));
 			// For easier debugging. Output each building when processed, include its row.
 			final int temp = i;
+			buildings.forEach(WebsiteParser::simplifyBuildingFormulas);
 			buildings.forEach(b -> System.out.println(temp + ": " + b.toString()));
 			allBuildings.addAll(buildings);
 		}
@@ -778,6 +781,7 @@ public class WebsiteParser {
 		}
 	}
 
+	// TODO: Move all the formula stuff in building class? Or even a new class?
 	/**
 	 * Extend the given formula with the given data. The formula then may return
 	 * different values based on {@link WebsiteParser#compareAgeTo compareAgeTo}.
@@ -816,6 +820,68 @@ public class WebsiteParser {
 			return currentFormula.replace("\"ERROR\"",
 					"WENN(" + compareAgeTo + "=\"" + age + "\";" + valueString + factorString + ";\"ERROR\")");
 		}
+	}
+
+	/**
+	 * If the value for every age is the same, just give out the value directly
+	 * without checking for age. Should only be called after all values are added.
+	 * Otherwise it could be, that age dependent values have to be added to a now
+	 * not age dependent value.
+	 * 
+	 * @param formula The formula to simplify.
+	 * @return The simplified formula, or the original formula if nothing could be
+	 *         changed.
+	 */
+	private static String simplifyFomula(String formula) {
+		// Match numbers and number operations.
+		Pattern pattern = Pattern.compile(";(\\d+([+\\-*,]\\d+)*);");
+		Matcher matcher = pattern.matcher(formula);
+
+		if (matcher.find()) {
+			String firstValue = matcher.group(1);
+			boolean allSame = true;
+
+			while (matcher.find()) {
+				String currentValue = matcher.group(1);
+				if (!currentValue.equals(firstValue)) {
+					allSame = false;
+					break;
+				}
+			}
+			if (allSame) {
+				return "=" + firstValue;
+			}
+		}
+		return formula;
+	}
+
+	/**
+	 * Simplify the formulas of a building. See
+	 * {@link WebsiteParser#simplifyFomula(String) simplifyFormula}.
+	 * 
+	 * @param building The building which formulas will be simplified.
+	 */
+	private static void simplifyBuildingFormulas(WikiBuilding building) {
+		// TODO: Just do it for every formula?
+		building.setHappiness(simplifyFomula(building.getHappiness()));
+		building.setPopulation(simplifyFomula(building.getPopulation()));
+		building.setAttackerAttack(simplifyFomula(building.getAttackerAttack()));
+		building.setAttackerDefense(simplifyFomula(building.getAttackerDefense()));
+		building.setDefenderAttack(simplifyFomula(building.getDefenderAttack()));
+		building.setDefenderDefense(simplifyFomula(building.getDefenderDefense()));
+		building.setRanking(simplifyFomula(building.getRanking()));
+		building.setMoneyPercent(simplifyFomula(building.getMoneyPercent()));
+		building.setSuppliesPercent(simplifyFomula(building.getSuppliesPercent()));
+		building.setMoney(simplifyFomula(building.getMoney()));
+		building.setSupplies(simplifyFomula(building.getSupplies()));
+		building.setGuildPower(simplifyFomula(building.getGuildPower()));
+		building.setMedals(simplifyFomula(building.getMedals()));
+		building.setGoods(simplifyFomula(building.getGoods()));
+		building.setGuildGoods(simplifyFomula(building.getGuildGoods()));
+		building.setBlueprints(simplifyFomula(building.getBlueprints()));
+		building.setDiamonds(simplifyFomula(building.getDiamonds()));
+		building.setForgePoints(simplifyFomula(building.getForgePoints()));
+		building.setUnits(simplifyFomula(building.getUnits()));
 	}
 
 	/**
