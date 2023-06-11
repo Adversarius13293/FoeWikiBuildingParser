@@ -61,9 +61,9 @@ public class WebsiteParser {
 		var allBuildings = new ArrayList<WikiBuilding>();
 		var buildingUrls = new ArrayList<String>();
 
-//		buildingUrls.addAll(getManualEdgeCaseBuildingUrls());
+		buildingUrls.addAll(getManualEdgeCaseBuildingUrls());
 //		buildingUrls.addAll(getBuildingUrls(specialBuildingsPage));
-		buildingUrls.addAll(getBuildingUrls(special2BuildingsPage));
+//		buildingUrls.addAll(getBuildingUrls(special2BuildingsPage));
 //		buildingUrls.addAll(getBuildingUrls(limitedBuildingsPage));
 
 		for (int i = 0; i < buildingUrls.size(); i++) {
@@ -109,6 +109,8 @@ public class WebsiteParser {
 		buildings.add(wikiUrl + "Chocolaterie_-_St._10");
 		// Multiple random item productions, besides fragments.
 		buildings.add(wikiUrl + "Druidenhütte_-_St._9");
+		// New layout, only motivated production, gives population.
+		buildings.add(wikiUrl + "Bühne_der_Zeitalter");
 
 		return buildings;
 	}
@@ -441,8 +443,10 @@ public class WebsiteParser {
 									break;
 								case "Liefert":
 									// Only ignore sometimes...
-									// Assuming only multi-column heading needs to be ignored.
-									if (colspan == 1 && headings.size() <= spanningCol) {
+									// Assuming only multi-row heading needs to be ignored. Need to check next line
+									// to see if it is still a heading row.
+									if (colspan == 1 && rowspan == 1 && headings.size() <= spanningCol && r == 1
+											&& buildingRows[r + 1].contains("<td")) {
 										if (headings.size() != spanningCol) {
 											throw new IllegalArgumentException(
 													"Unexpected order of headings: " + spanningCol);
