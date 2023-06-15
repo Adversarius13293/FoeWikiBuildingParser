@@ -160,7 +160,15 @@ public class WebsiteParser {
 		// New layout, only motivated production, gives population.
 		buildings.put(wikiUrl + "Bühne_der_Zeitalter", Arrays.asList(
 				"Bühne der Zeitalter||1x1|4|4|5 Sek.||11540|15|23|false|=WENN($AO$1=\"Bronzezeit\";90;WENN($AO$1=\"Eisenzeit\";196;WENN($AO$1=\"Frühes Mittelalter\";303;WENN($AO$1=\"Hochmittelalter\";427;WENN($AO$1=\"Spätes Mittelalter\";563;WENN($AO$1=\"Kolonialzeit\";711;WENN($AO$1=\"Industriezeitalter\";869;WENN($AO$1=\"Jahrhundertwende\";1037;WENN($AO$1=\"Die Moderne\";1217;WENN($AO$1=\"Die Postmoderne\";1402;WENN($AO$1=\"Gegenwart\";1601;WENN($AO$1=\"Morgen\";1805;WENN($AO$1=\"Die Zukunft\";2017;WENN($AO$1=\"Arktische Zukunft\";2238;WENN($AO$1=\"Ozeanische Zukunft\";2468;WENN($AO$1=\"Virtuelle Zukunft\";2701;WENN($AO$1=\"Raumfahrt: Mars\";4277;WENN($AO$1=\"Raumfahrt: Asteroidengürtel\";4648;WENN($AO$1=\"Raumfahrt: Venus\";5023;WENN($AO$1=\"Raumfahrt: Jupitermond\";5425;\"ERROR\"))))))))))))))))))))|=WENN($AO$1=\"Bronzezeit\";82;WENN($AO$1=\"Eisenzeit\";179;WENN($AO$1=\"Frühes Mittelalter\";276;WENN($AO$1=\"Hochmittelalter\";389;WENN($AO$1=\"Spätes Mittelalter\";512;WENN($AO$1=\"Kolonialzeit\";647;WENN($AO$1=\"Industriezeitalter\";790;WENN($AO$1=\"Jahrhundertwende\";943;WENN($AO$1=\"Die Moderne\";1107;WENN($AO$1=\"Die Postmoderne\";1275;WENN($AO$1=\"Gegenwart\";1456;WENN($AO$1=\"Morgen\";1641;WENN($AO$1=\"Die Zukunft\";1834;WENN($AO$1=\"Arktische Zukunft\";2035;WENN($AO$1=\"Ozeanische Zukunft\";2244;WENN($AO$1=\"Virtuelle Zukunft\";2456;WENN($AO$1=\"Raumfahrt: Mars\";3889;WENN($AO$1=\"Raumfahrt: Asteroidengürtel\";4226;WENN($AO$1=\"Raumfahrt: Venus\";4567;WENN($AO$1=\"Raumfahrt: Jupitermond\";4933;\"ERROR\"))))))))))))))))))))|=WENN($AO$1=\"Bronzezeit\";7;WENN($AO$1=\"Eisenzeit\";7;WENN($AO$1=\"Frühes Mittelalter\";8;WENN($AO$1=\"Hochmittelalter\";8;WENN($AO$1=\"Spätes Mittelalter\";9;WENN($AO$1=\"Kolonialzeit\";9;WENN($AO$1=\"Industriezeitalter\";10;WENN($AO$1=\"Jahrhundertwende\";10;WENN($AO$1=\"Die Moderne\";11;WENN($AO$1=\"Die Postmoderne\";11;WENN($AO$1=\"Gegenwart\";12;WENN($AO$1=\"Morgen\";12;WENN($AO$1=\"Die Zukunft\";13;WENN($AO$1=\"Arktische Zukunft\";14;WENN($AO$1=\"Ozeanische Zukunft\";15;WENN($AO$1=\"Virtuelle Zukunft\";16;WENN($AO$1=\"Raumfahrt: Mars\";17;WENN($AO$1=\"Raumfahrt: Asteroidengürtel\";18;WENN($AO$1=\"Raumfahrt: Venus\";19;WENN($AO$1=\"Raumfahrt: Jupitermond\";19;\"ERROR\"))))))))))))))))))))||||=WENN($AO$1=\"Bronzezeit\";80;WENN($AO$1=\"Eisenzeit\";128;WENN($AO$1=\"Frühes Mittelalter\";320;WENN($AO$1=\"Hochmittelalter\";640;WENN($AO$1=\"Spätes Mittelalter\";960;WENN($AO$1=\"Kolonialzeit\";1600;WENN($AO$1=\"Industriezeitalter\";3200;WENN($AO$1=\"Jahrhundertwende\";4800;WENN($AO$1=\"Die Moderne\";8000;WENN($AO$1=\"Die Postmoderne\";12800;WENN($AO$1=\"Gegenwart\";19200;WENN($AO$1=\"Morgen\";32000;WENN($AO$1=\"Die Zukunft\";51200;WENN($AO$1=\"Arktische Zukunft\";76800;WENN($AO$1=\"Ozeanische Zukunft\";96000;WENN($AO$1=\"Virtuelle Zukunft\";128000;WENN($AO$1=\"Raumfahrt: Mars\";208000;WENN($AO$1=\"Raumfahrt: Asteroidengürtel\";288000;WENN($AO$1=\"Raumfahrt: Venus\";336000;WENN($AO$1=\"Raumfahrt: Jupitermond\";384000;\"ERROR\"))))))))))))))))))))|||||||=15||||=4|||false|true"));
-
+		// Chance based forge points production in new layout.
+		buildings.put(wikiUrl + "Baum_der_Stille", Arrays.asList(
+				"Baum der Stille||1x1|1|1|5 Sek.||2030|2|4|false|||=WENN($AO$1=\"Bronzezeit\";1;WENN($AO$1=\"Eisenzeit\";1;WENN($AO$1=\"Frühes Mittelalter\";1;WENN($AO$1=\"Hochmittelalter\";1;WENN($AO$1=\"Spätes Mittelalter\";1;WENN($AO$1=\"Kolonialzeit\";1;WENN($AO$1=\"Industriezeitalter\";1;WENN($AO$1=\"Jahrhundertwende\";1;WENN($AO$1=\"Die Moderne\";1;WENN($AO$1=\"Die Postmoderne\";1;WENN($AO$1=\"Gegenwart\";2;WENN($AO$1=\"Morgen\";2;WENN($AO$1=\"Die Zukunft\";2;WENN($AO$1=\"Arktische Zukunft\";2;WENN($AO$1=\"Ozeanische Zukunft\";2;WENN($AO$1=\"Virtuelle Zukunft\";2;WENN($AO$1=\"Raumfahrt: Mars\";2;WENN($AO$1=\"Raumfahrt: Asteroidengürtel\";2;WENN($AO$1=\"Raumfahrt: Venus\";2;WENN($AO$1=\"Raumfahrt: Jupitermond\";2;\"ERROR\"))))))))))))))))))))||=WENN($AO$1=\"Bronzezeit\";2;WENN($AO$1=\"Eisenzeit\";2;WENN($AO$1=\"Frühes Mittelalter\";2;WENN($AO$1=\"Hochmittelalter\";2;WENN($AO$1=\"Spätes Mittelalter\";2;WENN($AO$1=\"Kolonialzeit\";2;WENN($AO$1=\"Industriezeitalter\";2;WENN($AO$1=\"Jahrhundertwende\";3;WENN($AO$1=\"Die Moderne\";3;WENN($AO$1=\"Die Postmoderne\";3;WENN($AO$1=\"Gegenwart\";3;WENN($AO$1=\"Morgen\";3;WENN($AO$1=\"Die Zukunft\";3;WENN($AO$1=\"Arktische Zukunft\";3;WENN($AO$1=\"Ozeanische Zukunft\";4;WENN($AO$1=\"Virtuelle Zukunft\";4;WENN($AO$1=\"Raumfahrt: Mars\";4;WENN($AO$1=\"Raumfahrt: Asteroidengürtel\";4;WENN($AO$1=\"Raumfahrt: Venus\";4;WENN($AO$1=\"Raumfahrt: Jupitermond\";4;\"ERROR\"))))))))))))))))))))||=WENN($AO$1=\"Bronzezeit\";5;WENN($AO$1=\"Eisenzeit\";8;WENN($AO$1=\"Frühes Mittelalter\";20;WENN($AO$1=\"Hochmittelalter\";40;WENN($AO$1=\"Spätes Mittelalter\";60;WENN($AO$1=\"Kolonialzeit\";100;WENN($AO$1=\"Industriezeitalter\";200;WENN($AO$1=\"Jahrhundertwende\";300;WENN($AO$1=\"Die Moderne\";500;WENN($AO$1=\"Die Postmoderne\";800;WENN($AO$1=\"Gegenwart\";1200;WENN($AO$1=\"Morgen\";2000;WENN($AO$1=\"Die Zukunft\";3200;WENN($AO$1=\"Arktische Zukunft\";4800;WENN($AO$1=\"Ozeanische Zukunft\";6000;WENN($AO$1=\"Virtuelle Zukunft\";8000;WENN($AO$1=\"Raumfahrt: Mars\";13000;WENN($AO$1=\"Raumfahrt: Asteroidengürtel\";18000;WENN($AO$1=\"Raumfahrt: Venus\";21000;WENN($AO$1=\"Raumfahrt: Jupitermond\";24000;\"ERROR\"))))))))))))))))))))|||=WENN($AO$1=\"Bronzezeit\";30;WENN($AO$1=\"Eisenzeit\";80;WENN($AO$1=\"Frühes Mittelalter\";130;WENN($AO$1=\"Hochmittelalter\";190;WENN($AO$1=\"Spätes Mittelalter\";250;WENN($AO$1=\"Kolonialzeit\";380;WENN($AO$1=\"Industriezeitalter\";470;WENN($AO$1=\"Jahrhundertwende\";570;WENN($AO$1=\"Die Moderne\";710;WENN($AO$1=\"Die Postmoderne\";890;WENN($AO$1=\"Gegenwart\";1160;WENN($AO$1=\"Morgen\";1340;WENN($AO$1=\"Die Zukunft\";1540;WENN($AO$1=\"Arktische Zukunft\";1750;WENN($AO$1=\"Ozeanische Zukunft\";1970;WENN($AO$1=\"Virtuelle Zukunft\";2200;WENN($AO$1=\"Raumfahrt: Mars\";3680;WENN($AO$1=\"Raumfahrt: Asteroidengürtel\";4080;WENN($AO$1=\"Raumfahrt: Venus\";4500;WENN($AO$1=\"Raumfahrt: Jupitermond\";4930;\"ERROR\"))))))))))))))))))))||||||||=4*0,5||Zufallsproduktion!;Einberechnete Zufallsproduktion!;50%: 2 'Renovierungs-Kit'- Fragmente|false|true"));
+		// Weirdly specific properties.
+		buildings.put(wikiUrl + "Größere_Ritualflamme", Arrays.asList(
+				"Größere Ritualflamme|Turm|Keine Straße benötigt|2|1|5 Sek.||4050|3|6|false|||||=7|=7|=40||||||||||||||false|true"));
+		// 4x 4 BP and 0x +4 units production, have to ignore the x for now.
+		buildings.put(wikiUrl + "Gelehrtenturm_der_Verbindung", Arrays.asList(
+				"Gelehrtenturm der Verbindung||Nicht definiert, wahrscheinlich keine|3|7|5 Sek.||15590|20|31|false|=WENN($AO$1=\"Bronzezeit\";710;WENN($AO$1=\"Eisenzeit\";1230;WENN($AO$1=\"Frühes Mittelalter\";1360;WENN($AO$1=\"Hochmittelalter\";1510;WENN($AO$1=\"Spätes Mittelalter\";1690;WENN($AO$1=\"Kolonialzeit\";1980;WENN($AO$1=\"Industriezeitalter\";2240;WENN($AO$1=\"Jahrhundertwende\";2450;WENN($AO$1=\"Die Moderne\";2630;WENN($AO$1=\"Die Postmoderne\";2740;WENN($AO$1=\"Gegenwart\";3180;WENN($AO$1=\"Morgen\";3860;WENN($AO$1=\"Die Zukunft\";4620;WENN($AO$1=\"Arktische Zukunft\";5380;WENN($AO$1=\"Ozeanische Zukunft\";6210;WENN($AO$1=\"Virtuelle Zukunft\";7410;WENN($AO$1=\"Raumfahrt: Mars\";11860;WENN($AO$1=\"Raumfahrt: Asteroidengürtel\";12890;WENN($AO$1=\"Raumfahrt: Venus\";13920;WENN($AO$1=\"Raumfahrt: Jupitermond\";15000;\"ERROR\"))))))))))))))))))))|=WENN($AO$1=\"Bronzezeit\";171;WENN($AO$1=\"Eisenzeit\";366;WENN($AO$1=\"Frühes Mittelalter\";561;WENN($AO$1=\"Hochmittelalter\";788;WENN($AO$1=\"Spätes Mittelalter\";1034;WENN($AO$1=\"Kolonialzeit\";1305;WENN($AO$1=\"Industriezeitalter\";1594;WENN($AO$1=\"Jahrhundertwende\";1903;WENN($AO$1=\"Die Moderne\";2231;WENN($AO$1=\"Die Postmoderne\";2571;WENN($AO$1=\"Gegenwart\";2930;WENN($AO$1=\"Morgen\";3302;WENN($AO$1=\"Die Zukunft\";3692;WENN($AO$1=\"Arktische Zukunft\";4095;WENN($AO$1=\"Ozeanische Zukunft\";4511;WENN($AO$1=\"Virtuelle Zukunft\";4940;WENN($AO$1=\"Raumfahrt: Mars\";7819;WENN($AO$1=\"Raumfahrt: Asteroidengürtel\";8493;WENN($AO$1=\"Raumfahrt: Venus\";9180;WENN($AO$1=\"Raumfahrt: Jupitermond\";9885;\"ERROR\"))))))))))))))))))))|=WENN($AO$1=\"Bronzezeit\";12;WENN($AO$1=\"Eisenzeit\";13;WENN($AO$1=\"Frühes Mittelalter\";13;WENN($AO$1=\"Hochmittelalter\";14;WENN($AO$1=\"Spätes Mittelalter\";14;WENN($AO$1=\"Kolonialzeit\";15;WENN($AO$1=\"Industriezeitalter\";15;WENN($AO$1=\"Jahrhundertwende\";16;WENN($AO$1=\"Die Moderne\";16;WENN($AO$1=\"Die Postmoderne\";17;WENN($AO$1=\"Gegenwart\";17;WENN($AO$1=\"Morgen\";18;WENN($AO$1=\"Die Zukunft\";18;WENN($AO$1=\"Arktische Zukunft\";19;WENN($AO$1=\"Ozeanische Zukunft\";19;WENN($AO$1=\"Virtuelle Zukunft\";20;WENN($AO$1=\"Raumfahrt: Mars\";20;WENN($AO$1=\"Raumfahrt: Asteroidengürtel\";21;WENN($AO$1=\"Raumfahrt: Venus\";21;WENN($AO$1=\"Raumfahrt: Jupitermond\";22;\"ERROR\"))))))))))))))))))))||||=WENN($AO$1=\"Bronzezeit\";105;WENN($AO$1=\"Eisenzeit\";168;WENN($AO$1=\"Frühes Mittelalter\";420;WENN($AO$1=\"Hochmittelalter\";840;WENN($AO$1=\"Spätes Mittelalter\";1260;WENN($AO$1=\"Kolonialzeit\";2100;WENN($AO$1=\"Industriezeitalter\";4200;WENN($AO$1=\"Jahrhundertwende\";6300;WENN($AO$1=\"Die Moderne\";10500;WENN($AO$1=\"Die Postmoderne\";16800;WENN($AO$1=\"Gegenwart\";25200;WENN($AO$1=\"Morgen\";42000;WENN($AO$1=\"Die Zukunft\";67200;WENN($AO$1=\"Arktische Zukunft\";100800;WENN($AO$1=\"Ozeanische Zukunft\";126000;WENN($AO$1=\"Virtuelle Zukunft\";168000;WENN($AO$1=\"Raumfahrt: Mars\";273000;WENN($AO$1=\"Raumfahrt: Asteroidengürtel\";378000;WENN($AO$1=\"Raumfahrt: Venus\";441000;WENN($AO$1=\"Raumfahrt: Jupitermond\";504000;\"ERROR\"))))))))))))))))))))||||=WENN($AO$1=\"Bronzezeit\";1100;WENN($AO$1=\"Eisenzeit\";2500;WENN($AO$1=\"Frühes Mittelalter\";4200;WENN($AO$1=\"Hochmittelalter\";5900;WENN($AO$1=\"Spätes Mittelalter\";7800;WENN($AO$1=\"Kolonialzeit\";9900;WENN($AO$1=\"Industriezeitalter\";12000;WENN($AO$1=\"Jahrhundertwende\";14100;WENN($AO$1=\"Die Moderne\";16400;WENN($AO$1=\"Die Postmoderne\";18700;WENN($AO$1=\"Gegenwart\";21000;WENN($AO$1=\"Morgen\";23500;WENN($AO$1=\"Die Zukunft\";25800;WENN($AO$1=\"Arktische Zukunft\";28400;WENN($AO$1=\"Ozeanische Zukunft\";31100;WENN($AO$1=\"Virtuelle Zukunft\";33600;WENN($AO$1=\"Raumfahrt: Mars\";54400;WENN($AO$1=\"Raumfahrt: Asteroidengürtel\";58400;WENN($AO$1=\"Raumfahrt: Venus\";62600;WENN($AO$1=\"Raumfahrt: Jupitermond\";66600;\"ERROR\"))))))))))))))))))))||=WENN($AO$1=\"Bronzezeit\";63;WENN($AO$1=\"Eisenzeit\";81;WENN($AO$1=\"Frühes Mittelalter\";99;WENN($AO$1=\"Hochmittelalter\";117;WENN($AO$1=\"Spätes Mittelalter\";135;WENN($AO$1=\"Kolonialzeit\";162;WENN($AO$1=\"Industriezeitalter\";225;WENN($AO$1=\"Jahrhundertwende\";315;WENN($AO$1=\"Die Moderne\";450;WENN($AO$1=\"Die Postmoderne\";630;WENN($AO$1=\"Gegenwart\";900;WENN($AO$1=\"Morgen\";1215;WENN($AO$1=\"Die Zukunft\";1485;WENN($AO$1=\"Arktische Zukunft\";1800;WENN($AO$1=\"Ozeanische Zukunft\";2070;WENN($AO$1=\"Virtuelle Zukunft\";2520;WENN($AO$1=\"Raumfahrt: Mars\";3060;WENN($AO$1=\"Raumfahrt: Asteroidengürtel\";3600;WENN($AO$1=\"Raumfahrt: Venus\";4140;WENN($AO$1=\"Raumfahrt: Jupitermond\";4680;\"ERROR\"))))))))))))))))))))|=WENN($AO$1=\"Bronzezeit\";20;WENN($AO$1=\"Eisenzeit\";20;WENN($AO$1=\"Frühes Mittelalter\";20;WENN($AO$1=\"Hochmittelalter\";20;WENN($AO$1=\"Spätes Mittelalter\";20;WENN($AO$1=\"Kolonialzeit\";20;WENN($AO$1=\"Industriezeitalter\";20;WENN($AO$1=\"Jahrhundertwende\";20;WENN($AO$1=\"Die Moderne\";20;WENN($AO$1=\"Die Postmoderne\";20;WENN($AO$1=\"Gegenwart\";20;WENN($AO$1=\"Morgen\";20;WENN($AO$1=\"Die Zukunft\";20;WENN($AO$1=\"Arktische Zukunft\";21;WENN($AO$1=\"Ozeanische Zukunft\";21;WENN($AO$1=\"Virtuelle Zukunft\";21;WENN($AO$1=\"Raumfahrt: Mars\";21;WENN($AO$1=\"Raumfahrt: Asteroidengürtel\";21;WENN($AO$1=\"Raumfahrt: Venus\";21;WENN($AO$1=\"Raumfahrt: Jupitermond\";22;\"ERROR\"))))))))))))))))))))||=WENN($AO$1=\"Bronzezeit\";4;WENN($AO$1=\"Eisenzeit\";4;WENN($AO$1=\"Frühes Mittelalter\";4;WENN($AO$1=\"Hochmittelalter\";4;WENN($AO$1=\"Spätes Mittelalter\";4;WENN($AO$1=\"Kolonialzeit\";4;WENN($AO$1=\"Industriezeitalter\";4;WENN($AO$1=\"Jahrhundertwende\";4;WENN($AO$1=\"Die Moderne\";4;WENN($AO$1=\"Die Postmoderne\";4;WENN($AO$1=\"Gegenwart\";4;WENN($AO$1=\"Morgen\";4;WENN($AO$1=\"Die Zukunft\";4;WENN($AO$1=\"Arktische Zukunft\";5;WENN($AO$1=\"Ozeanische Zukunft\";5;WENN($AO$1=\"Virtuelle Zukunft\";5;WENN($AO$1=\"Raumfahrt: Mars\";5;WENN($AO$1=\"Raumfahrt: Asteroidengürtel\";5;WENN($AO$1=\"Raumfahrt: Venus\";5;WENN($AO$1=\"Raumfahrt: Jupitermond\";6;\"ERROR\"))))))))))))))))))))||=WENN($AO$1=\"Bronzezeit\";9;WENN($AO$1=\"Eisenzeit\";9;WENN($AO$1=\"Frühes Mittelalter\";9;WENN($AO$1=\"Hochmittelalter\";9;WENN($AO$1=\"Spätes Mittelalter\";9;WENN($AO$1=\"Kolonialzeit\";9;WENN($AO$1=\"Industriezeitalter\";9;WENN($AO$1=\"Jahrhundertwende\";9;WENN($AO$1=\"Die Moderne\";9;WENN($AO$1=\"Die Postmoderne\";9;WENN($AO$1=\"Gegenwart\";9;WENN($AO$1=\"Morgen\";9;WENN($AO$1=\"Die Zukunft\";9;WENN($AO$1=\"Arktische Zukunft\";10;WENN($AO$1=\"Ozeanische Zukunft\";10;WENN($AO$1=\"Virtuelle Zukunft\";10;WENN($AO$1=\"Raumfahrt: Mars\";10;WENN($AO$1=\"Raumfahrt: Asteroidengürtel\";10;WENN($AO$1=\"Raumfahrt: Venus\";10;WENN($AO$1=\"Raumfahrt: Jupitermond\";11;\"ERROR\"))))))))))))))))))))|=WENN($AO$1=\"Bronzezeit\";4;WENN($AO$1=\"Eisenzeit\";4;WENN($AO$1=\"Frühes Mittelalter\";4;WENN($AO$1=\"Hochmittelalter\";4;WENN($AO$1=\"Spätes Mittelalter\";4;WENN($AO$1=\"Kolonialzeit\";4;WENN($AO$1=\"Industriezeitalter\";4;WENN($AO$1=\"Jahrhundertwende\";4;WENN($AO$1=\"Die Moderne\";4;WENN($AO$1=\"Die Postmoderne\";4;WENN($AO$1=\"Gegenwart\";4;WENN($AO$1=\"Morgen\";4;WENN($AO$1=\"Die Zukunft\";5;WENN($AO$1=\"Arktische Zukunft\";5;WENN($AO$1=\"Ozeanische Zukunft\";5;WENN($AO$1=\"Virtuelle Zukunft\";5;WENN($AO$1=\"Raumfahrt: Mars\";5;WENN($AO$1=\"Raumfahrt: Asteroidengürtel\";5;WENN($AO$1=\"Raumfahrt: Venus\";5;WENN($AO$1=\"Raumfahrt: Jupitermond\";6;\"ERROR\"))))))))))))))))))))||false|true"));
 		return buildings;
 	}
 
@@ -471,6 +479,7 @@ public class WebsiteParser {
 								case "Punkte":
 								case "Boosts":
 								case "Zufriedenheit":
+								case "Bedürfnisse":
 									// Assumes the production cells can be filled from left to right.
 									// But ignore if they go over multiple rows.
 									if (headings.size() <= spanningCol) {
@@ -554,15 +563,22 @@ public class WebsiteParser {
 					String heading = headings.get(c);
 
 					// Some cells contain multiple lines and bonuses.
-					if ("Boosts".equals(heading) || "1 T. Produktion".equals(heading) || "Liefert".equals(heading)) {
+					if ("Boosts".equals(heading) || "1 T. Produktion".equals(heading) || "Liefert".equals(heading)
+							|| "Bedürfnisse".equals(heading)) {
 						// And sometimes even multiple bonuses in one line, so add line break.
 						// Split without closing tag. so the clean-method can add an opening tag.
 						String[] splitted = productionCells[c].replace(", ", "<br />").split("<br ");
 						for (String s : splitted) {
-							if (cleanHtmlSplit(s).isBlank() || "Wenn motiviert:".equals(cleanHtmlSplit(s))) {
+							String cleanedSplit = cleanHtmlSplit(s);
+							if (cleanedSplit.isBlank() || "Wenn motiviert:".equals(cleanedSplit)) {
 								// All this replacing parts of the inner table with line breaks may lead to
 								// empty entries. Assuming images without text aren't data.
 								continue;
+							}
+							if ("Bedürfnisse".equals(heading)) {
+								// Currently only known for population, with a positive value. But should also
+								// work with negative values because of the parseInt function.
+								cleanedSplit = "-" + cleanedSplit;
 							}
 							if (s.contains("<img ")) {
 								// Take table heading, but can overwrite by image text if an image was found.
@@ -571,11 +587,25 @@ public class WebsiteParser {
 								// Reset heading in case one of the lines does not have an image.
 								heading = headings.get(c);
 							}
-							if ("Zufällig 🪄".equals(cleanHtmlSplit(s))) {
+							if ("Zufällig 🪄".equals(cleanedSplit)) {
 								buildings.forEach(b -> b.appendSpecialProduction("Zufallsproduktion!"));
 							} else {
-								addProductionToBuildings(filteredBuildings, heading, cleanHtmlSplit(s),
-										multFactor.get(c));
+								// Some percentage productions can be added to the normal production attributes.
+								// TODO: Find a good generic solution.
+								// Currently ignoring the x value. Assuming the real production comes after it.
+								// Because sometimes it says like 4x4 FP, even though it is meant to be 4 FP.
+								if (cleanedSplit.matches("^[0-9]+%: [0-9]+x.*") && "forgepoints".equals(heading)) {
+									int chance = parseInt(cleanedSplit.split(":")[0]);
+									filteredBuildings.forEach(
+											b -> b.appendSpecialProduction("Einberechnete Zufallsproduktion!"));
+									// TODO: Remove x split once bug report is implemented?
+									addProductionToBuildings(filteredBuildings, heading, cleanedSplit.split("x")[1],
+											multFactor.get(c) * (chance / 100.));
+								} else {
+									addProductionToBuildings(filteredBuildings, heading, cleanedSplit,
+											multFactor.get(c));
+								}
+
 							}
 						}
 					} else {
@@ -772,8 +802,13 @@ public class WebsiteParser {
 					buildFormulaString(lastAge, b.getMedals(), parseInt(data.replace("Medaillen", "")), factor)));
 			break;
 		case "blueprint":
-			buildings.forEach(
-					b -> b.setBlueprints(buildFormulaString(lastAge, b.getBlueprints(), parseInt(data), factor)));
+			buildings.forEach(b -> b.setBlueprints(
+					// TODO: Remove regex replace once bug report is implemented?
+					buildFormulaString(lastAge, b.getBlueprints(),
+							parseInt(data.matches("[0-9]+x [0-9]+ Blaupause(n)?")
+									? data.replaceAll("Blaupause(n)?", "").replaceAll("^[0-9]+x ", "")
+									: data),
+							factor)));
 			break;
 		case "premium":
 			buildings.forEach(b -> b.setDiamonds(buildFormulaString(lastAge, b.getDiamonds(), parseInt(data), factor)));
@@ -797,9 +832,10 @@ public class WebsiteParser {
 			break;
 		case "strategy_points":
 		case "Forge-Punkte":
+		case "forgepoints":
 			// Sometimes the data contains number, icon, and text all at once.
 			buildings.forEach(b -> b.setForgePoints(buildFormulaString(lastAge, b.getForgePoints(),
-					parseInt(data.replace("Forge-Punkte", "")), factor)));
+					parseInt(data.replaceAll("Forge-Punkt(e)?", "")), factor)));
 			break;
 		case "forge_points_production":
 			// For now as special production, since its only one building.
@@ -808,9 +844,9 @@ public class WebsiteParser {
 			break;
 		case "military":
 			// Sometimes can be written in a weird form.
-			// TODO: Remove regex replace once bug report is implemented.
+			// TODO: Remove regex replace once bug report is implemented?
 			buildings.forEach(b -> b.setUnits(buildFormulaString(lastAge, b.getUnits(),
-					parseInt(data.replace("zufällige Einheit", "").replaceAll("^0x ", "")), factor)));
+					parseInt(data.replaceAll("zufällige Einheit(en)?", "").replaceAll("^0x ", "")), factor)));
 			break;
 		case "armyuniticons_90x90_rogue":
 			// Assuming the age can be ignored here.
@@ -831,11 +867,17 @@ public class WebsiteParser {
 			buildings.forEach(
 					b -> b.appendSpecialProduction(converDoubleToString(parseInt(data) * factor) + "x Trommler"));
 			break;
+		case "long_ranged":
+			// Assuming the age can be ignored here.
+			buildings.forEach(b -> b.appendSpecialProduction(
+					converDoubleToString(parseInt(data.split("x")[0]) * factor) + "x Artillerie"));
+			break;
 		case "icon_fragment":
 		case "boost_coins_large":
 		case "rush_mass_coins_medium":
 		case "dead_man_stash":
 		case "buccaneer":
+		case "motivate_one":
 			// TODO: Find a safe way to automatically apply this to all upcoming items.
 			// Since special production is not age dependent, its hard to properly display
 			// multiple fragments from one age, and also from different ages.
@@ -1057,12 +1099,18 @@ public class WebsiteParser {
 			if (data.contains("<img ")) {
 				addProductionToBuildings(buildings, getImageText(data), cleanHtmlSplit(data), 1);
 			} else {
-				throw new IllegalArgumentException("Expectedt data to contain an image: " + data);
+				throw new IllegalArgumentException("Expected data to contain an image: " + data);
+			}
+			break;
+		case "Zeitalter:":
+			if (!"Alle Zeitalter".equals(data)) {
+				throw new IllegalArgumentException("Expected age in properties to be generic: " + data);
 			}
 			break;
 		case "Einheitenkosten:":
 		case "Slot-Kosten:":
 		case "Eingeführt mit:":
+		case "Freigeschaltet durch:":
 			// Ignore.
 			break;
 		default:
