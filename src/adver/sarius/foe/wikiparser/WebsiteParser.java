@@ -47,6 +47,12 @@ public class WebsiteParser {
 	public static final String special2BuildingsPage = "Liste_besonderer_Gebäude_Teil_2";
 	public static final String limitedBuildingsPage = "Eingeschränkte_Gebäude";
 
+	/**
+	 * Contains additional properties for building urls. For informations from the
+	 * main table, or manually added data.
+	 */
+	private static final Map<String, Map<String, String>> additionalProperties = new HashMap<>();
+
 	// TODO: Parse maybe even military buildings?
 	// TODO: Some hard coded building properties? Like settlement and GEX buildings?
 	// Fountain probabilities?
@@ -85,6 +91,7 @@ public class WebsiteParser {
 	 * throw exception if the results don't match.
 	 */
 	private static void testManualEdgeCaseBuildings() {
+		// TODO: How to integrate building type from main page?
 		System.out.println("Start doing test cases.");
 		Map<String, List<String>> toTest = getManualEdgeCaseBuildings();
 
@@ -159,7 +166,7 @@ public class WebsiteParser {
 
 	/**
 	 * Get urls for all buildings that can be found in a table on the given url. For
-	 * example {@link WebsiteParser#specialBuildingsPage specialBuildingsPart}
+	 * example {@link WebsiteParser#specialBuildingsPage specialBuildingsPage}.
 	 * 
 	 * @param tableUrlPart The part of the url that leads to a table of buildings.
 	 * @return Urls of all buildings on the given buildings site.
@@ -182,8 +189,17 @@ public class WebsiteParser {
 			// Extract the building sub page
 			String[] cells = rows[i].split("<td");
 			String buildingLink = cells[2].split("title=")[1].split("\"")[0];
-
 			String buildingUrl = wikiUrl + buildingLink;
+
+			// For some reason new building layouts don't have their building type and
+			// street listed on the details page. So read it from the main table.
+			// Assuming the data is the same as on teh details page if present.
+			// TODO: Maybe return a list of (empty) buildings with saved urls instead of a
+			// list of string urls? Then additional data could be saved directly from the
+			// beginning.
+			String buildingType = cleanHtmlSplit(cells[3]);
+			additionalProperties.computeIfAbsent(buildingUrl, key -> new HashMap<String, String>()).put("Art:",
+					buildingType);
 			buildings.add(buildingUrl);
 		}
 		return buildings;
@@ -234,6 +250,11 @@ public class WebsiteParser {
 		building.setName(buildingName);
 		buildings.add(building);
 
+		// Add additional data first, so it can be overwritten by actual data?
+		if (additionalProperties.containsKey(buildingUrl)) {
+			additionalProperties.get(buildingUrl).forEach((k, v) -> addPropertiesToBuildings(buildings, k, v));
+		}
+
 		String lastHeading = null;
 		requiresPopulation = false;
 		lastAge = "undefined";
@@ -280,8 +301,8 @@ public class WebsiteParser {
 						}
 						lastHeading = null;
 					} else {
-						// Unspecific boost. Need to analyze icon and value of data later.
-						if ("Boosts:".equals(lastHeading)) {
+						if ("Boosts:".equals(lastHeading) || "1 T. Produktion:".equals(lastHeading)) {
+							// Unspecific boost or production. Need to analyze icon and value of data later.
 							cellContent = cell;
 						}
 						addPropertiesToBuildings(buildings, lastHeading, cellContent);
@@ -725,6 +746,7 @@ public class WebsiteParser {
 				b.setDefenderAttack(buildFormulaString(lastAge, b.getDefenderAttack(), parseInt(data), factor));
 				b.setDefenderDefense(buildFormulaString(lastAge, b.getDefenderDefense(), parseInt(data), factor));
 			});
+			break;
 		case "coin_production":
 			buildings.forEach(
 					b -> b.setMoneyPercent(buildFormulaString(lastAge, b.getMoneyPercent(), parseInt(data), factor)));
@@ -1012,9 +1034,13 @@ public class WebsiteParser {
 			buildings.forEach(b -> b.setSet(data));
 			break;
 		case "Boosts:":
-			var tmpDataType = getImageText(data);
-			var tmpData = cleanHtmlSplit(data);
-			addProductionToBuildings(buildings, tmpDataType, tmpData, 1);
+			// Can contain multiple entries.
+			String[] splitted = data.split("<br ");
+			for (String s : splitted) {
+				var tmpData = cleanHtmlSplit(s);
+				var tmpDataType = getImageText(s);
+				addProductionToBuildings(buildings, tmpDataType, tmpData, 1);
+			}
 			break;
 		case "Zufriedenheit:":
 			addProductionToBuildings(buildings, dataType, data, 1);
@@ -1027,8 +1053,12 @@ public class WebsiteParser {
 			break;
 		case "1 T. Produktion:":
 			// Only tested for one entry. Seems to be a table inside that cell.
-			int indexSpace = data.indexOf(' ');
-			addProductionToBuildings(buildings, data.substring(indexSpace).trim(), data.substring(0, indexSpace), 1);
+			// TODO: Make it work for tables?
+			if (data.contains("<img ")) {
+				addProductionToBuildings(buildings, getImageText(data), cleanHtmlSplit(data), 1);
+			} else {
+				throw new IllegalArgumentException("Expectedt data to contain an image: " + data);
+			}
 			break;
 		case "Einheitenkosten:":
 		case "Slot-Kosten:":
