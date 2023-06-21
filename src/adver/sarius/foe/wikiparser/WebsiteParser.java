@@ -24,7 +24,6 @@ import adver.sarius.foe.building.WikiBuilding;
 
 public class WebsiteParser {
 
-	// Used in formula to compare the age against.
 	/** Used in the formulas to compare the age string against. */
 //	private static final String compareAgeTo = "$Z$1";
 	private static final String compareAgeTo = "$AO$1";
@@ -67,27 +66,85 @@ public class WebsiteParser {
 	// TODO: Mark Production buildings? Since they are not producing everything at
 	// once. Or is the building type indication enough?
 	public static void main(String[] args) {
+		initAdditionalProperties();
 		var allBuildings = new ArrayList<WikiBuilding>();
 		var buildingUrls = new ArrayList<String>();
 
 		testManualEdgeCaseBuildings();
 
-//		buildingUrls.addAll(getBuildingUrls(specialBuildingsPage));
-//		buildingUrls.addAll(getBuildingUrls(special2BuildingsPage));
-//		buildingUrls.addAll(getBuildingUrls(limitedBuildingsPage));
+		buildingUrls.addAll(getBuildingUrls(specialBuildingsPage));
+		buildingUrls.addAll(getBuildingUrls(special2BuildingsPage));
+		buildingUrls.addAll(getBuildingUrls(limitedBuildingsPage));
 
 		for (int i = 0; i < buildingUrls.size(); i++) {
 			List<WikiBuilding> buildings = processBuildingWebSite(buildingUrls.get(i));
 			// For easier debugging. Output each building when processed, include its row.
 			final int temp = i;
 			buildings.forEach(WebsiteParser::simplifyBuildingFormulas);
-			buildings.forEach(b -> System.out.println(temp + ": " + b.toString()));
+			buildings.forEach(b -> System.out.println(temp + "|" + b.toString()));
 			allBuildings.addAll(buildings);
 		}
 		System.out.println("Done");
 		// No real need to filter out buildings afterwards? Can just do that in the
 		// resulting document itself.
 //			outputBuildings(allBuildings);
+	}
+
+	/**
+	 * Set some hard coded properties for specific buildings.
+	 */
+	private static void initAdditionalProperties() {
+		// TODO: Add guild expedition buildings as set? But now they have their own set
+		// at stage 5.
+		// Not really a set, but it's nice to have them marked this way.
+		for (int i = 1; i <= 9; i++) {
+			additionalProperties.computeIfAbsent(wikiUrl + "Yggdrasil_-_St._" + i, key -> new HashMap<String, String>())
+					.put("Set:", "Kulturelle Siedlung: Wikinger");
+		}
+		for (int i = 1; i <= 5; i++) {
+			additionalProperties
+					.computeIfAbsent(wikiUrl + "Größerer_Runenstein_-_St._" + i, key -> new HashMap<String, String>())
+					.put("Set:", "Kulturelle Siedlung: Wikinger");
+		}
+		for (int i = 1; i <= 9; i++) {
+			additionalProperties
+					.computeIfAbsent(wikiUrl + "Shinto-Tempel_-_St._" + i, key -> new HashMap<String, String>())
+					.put("Set:", "Kulturelle Siedlung: Japan");
+		}
+		for (int i = 1; i <= 5; i++) {
+			additionalProperties
+					.computeIfAbsent(wikiUrl + "Zeitloses_Dojo_-_St._" + i, key -> new HashMap<String, String>())
+					.put("Set:", "Kulturelle Siedlung: Japan");
+		}
+		for (int i = 1; i <= 6; i++) {
+			additionalProperties
+					.computeIfAbsent(wikiUrl + "Königliches_Badehaus_-_St._" + i, key -> new HashMap<String, String>())
+					.put("Set:", "Kulturelle Siedlung: Ägypten");
+		}
+		for (int i = 1; i <= 4; i++) {
+			additionalProperties
+					.computeIfAbsent(wikiUrl + "Uralter_Obelisk_-_St._" + i, key -> new HashMap<String, String>())
+					.put("Set:", "Kulturelle Siedlung: Ägypten");
+		}
+		for (int i = 1; i <= 9; i++) {
+			additionalProperties
+					.computeIfAbsent(wikiUrl + "Sonnentempel_-_St._" + i, key -> new HashMap<String, String>())
+					.put("Set:", "Kulturelle Siedlung: Azteken");
+		}
+		for (int i = 1; i <= 5; i++) {
+			additionalProperties
+					.computeIfAbsent(wikiUrl + "Jade_Statue_-_St._" + i, key -> new HashMap<String, String>())
+					.put("Set:", "Kulturelle Siedlung: Azteken");
+		}
+		for (int i = 1; i <= 6; i++) {
+			additionalProperties
+					.computeIfAbsent(wikiUrl + "Mogultempel_-_St._" + i, key -> new HashMap<String, String>())
+					.put("Set:", "Kulturelle Siedlung: Mogul");
+		}
+		for (int i = 1; i <= 4; i++) {
+			additionalProperties.computeIfAbsent(wikiUrl + "Minarett_-_St._" + i, key -> new HashMap<String, String>())
+					.put("Set:", "Kulturelle Siedlung: Mogul");
+		}
 	}
 
 	/**
@@ -1062,6 +1119,7 @@ public class WebsiteParser {
 				// TODO: Also mark chain start buildings?
 			case "Zusätzliche Produktion bei Platzierung neben anderen einzigartigen Gebäuden desselben Sets":
 			case "Basisproduktion wird verdoppelt, wenn es motiviert ist. Kann geplündert werden, wenn es nicht motiviert ist":
+			case "Produziert Münzen, wenn es motiviert ist (Vorräte werden nicht verdoppelt). Kann geplündert werden, wenn es nicht motiviert ist":
 			case "Renovierungs-Kit zur Verbesserung auf aktuelles Zeitalter nötig":
 			case "Plus-Eins-Kit zur Verbesserung auf nächstes Zeitalter nötig":
 			case "Kann mit  Einlagerungs-Kit im Inventar verstaut werden":
