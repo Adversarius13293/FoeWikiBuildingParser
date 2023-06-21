@@ -14,6 +14,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Random;
+import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -56,12 +57,15 @@ public class WebsiteParser {
 	// TODO: Parse maybe even military buildings?
 	// TODO: Some hard coded building properties? Like settlement and GEX buildings?
 	// Fountain probabilities?
-	// TODO: Pass down the building type from main table, if available.
 	// TODO: Differentiate between goods productions? random ones, of one type,
 	// equal of each.
 	// TODO: Which buildings need to be connected to the street for their boosts?
+	// TODO: Currently chance based FP production is calculated for average. But for
+	// galaxy the real number is relevant.
 	// TODO: We are getting more and more fragments. Find a better way than "special
-	// production" to store and display them?
+	// production" to store and display fragments?
+	// TODO: Mark Production buildings? Since they are not producing everything at
+	// once. Or is the building type indication enough?
 	public static void main(String[] args) {
 		var allBuildings = new ArrayList<WikiBuilding>();
 		var buildingUrls = new ArrayList<String>();
@@ -130,7 +134,7 @@ public class WebsiteParser {
 				"Agenten-Versteck|Militärgebäude|1x1|2|3|||6080|5|9|false|||||||=240|||||||||||||1x Agent|true|true"));
 		// Production building, requires population.
 		buildings.put(wikiUrl + "Aviarium", Arrays.asList(
-				"Aviarium|Produktionsstätten|1x1|3|4|||6480|8|13|false|=WENN($AO$1=\"Bronzezeit\";76;WENN($AO$1=\"Eisenzeit\";163;WENN($AO$1=\"Frühes Mittelalter\";191;WENN($AO$1=\"Hochmittelalter\";253;WENN($AO$1=\"Spätes Mittelalter\";320;WENN($AO$1=\"Kolonialzeit\";377;WENN($AO$1=\"Industriezeitalter\";425;WENN($AO$1=\"Jahrhundertwende\";467;WENN($AO$1=\"Die Moderne\";519;WENN($AO$1=\"Die Postmoderne\";520;WENN($AO$1=\"Gegenwart\";665;WENN($AO$1=\"Morgen\";807;WENN($AO$1=\"Die Zukunft\";967;WENN($AO$1=\"Arktische Zukunft\";1024;WENN($AO$1=\"Ozeanische Zukunft\";1181;WENN($AO$1=\"Virtuelle Zukunft\";1411;WENN($AO$1=\"Raumfahrt: Mars\";2258;WENN($AO$1=\"Raumfahrt: Asteroidengürtel\";2454;WENN($AO$1=\"Raumfahrt: Venus\";2651;WENN($AO$1=\"Raumfahrt: Jupitermond\";2856;\"ERROR\"))))))))))))))))))))|=WENN($AO$1=\"Bronzezeit\";-50;WENN($AO$1=\"Eisenzeit\";-110;WENN($AO$1=\"Frühes Mittelalter\";-150;WENN($AO$1=\"Hochmittelalter\";-200;WENN($AO$1=\"Spätes Mittelalter\";-250;WENN($AO$1=\"Kolonialzeit\";-290;WENN($AO$1=\"Industriezeitalter\";-340;WENN($AO$1=\"Jahrhundertwende\";-380;WENN($AO$1=\"Die Moderne\";-420;WENN($AO$1=\"Die Postmoderne\";-460;WENN($AO$1=\"Gegenwart\";-500;WENN($AO$1=\"Morgen\";-540;WENN($AO$1=\"Die Zukunft\";-600;WENN($AO$1=\"Arktische Zukunft\";-640;WENN($AO$1=\"Ozeanische Zukunft\";-680;WENN($AO$1=\"Virtuelle Zukunft\";-720;WENN($AO$1=\"Raumfahrt: Mars\";-1090;WENN($AO$1=\"Raumfahrt: Asteroidengürtel\";-1150;WENN($AO$1=\"Raumfahrt: Venus\";-1200;WENN($AO$1=\"Raumfahrt: Jupitermond\";-1250;\"ERROR\"))))))))))))))))))))|||||=WENN($AO$1=\"Bronzezeit\";60;WENN($AO$1=\"Eisenzeit\";96;WENN($AO$1=\"Frühes Mittelalter\";240;WENN($AO$1=\"Hochmittelalter\";480;WENN($AO$1=\"Spätes Mittelalter\";720;WENN($AO$1=\"Kolonialzeit\";1200;WENN($AO$1=\"Industriezeitalter\";2400;WENN($AO$1=\"Jahrhundertwende\";3600;WENN($AO$1=\"Die Moderne\";6000;WENN($AO$1=\"Die Postmoderne\";9600;WENN($AO$1=\"Gegenwart\";14400;WENN($AO$1=\"Morgen\";24000;WENN($AO$1=\"Die Zukunft\";38400;WENN($AO$1=\"Arktische Zukunft\";57600;WENN($AO$1=\"Ozeanische Zukunft\";72000;WENN($AO$1=\"Virtuelle Zukunft\";96000;WENN($AO$1=\"Raumfahrt: Mars\";156000;WENN($AO$1=\"Raumfahrt: Asteroidengürtel\";216000;WENN($AO$1=\"Raumfahrt: Venus\";252000;WENN($AO$1=\"Raumfahrt: Jupitermond\";288000;\"ERROR\"))))))))))))))))))))|||=WENN($AO$1=\"Bronzezeit\";270*3;WENN($AO$1=\"Eisenzeit\";580*3;WENN($AO$1=\"Frühes Mittelalter\";960*3;WENN($AO$1=\"Hochmittelalter\";1340*3;WENN($AO$1=\"Spätes Mittelalter\";1670*3;WENN($AO$1=\"Kolonialzeit\";2030*3;WENN($AO$1=\"Industriezeitalter\";2420*3;WENN($AO$1=\"Jahrhundertwende\";2810*3;WENN($AO$1=\"Die Moderne\";3500*3;WENN($AO$1=\"Die Postmoderne\";4400*3;WENN($AO$1=\"Gegenwart\";5730*3;WENN($AO$1=\"Morgen\";6630*3;WENN($AO$1=\"Die Zukunft\";7600*3;WENN($AO$1=\"Arktische Zukunft\";8640*3;WENN($AO$1=\"Ozeanische Zukunft\";9740*3;WENN($AO$1=\"Virtuelle Zukunft\";10910*3;WENN($AO$1=\"Raumfahrt: Mars\";18230*3;WENN($AO$1=\"Raumfahrt: Asteroidengürtel\";20190*3;WENN($AO$1=\"Raumfahrt: Venus\";22250*3;WENN($AO$1=\"Raumfahrt: Jupitermond\";24420*3;\"ERROR\"))))))))))))))))))))|=WENN($AO$1=\"Bronzezeit\";180*6+43*96+13*288;WENN($AO$1=\"Eisenzeit\";432*6+102*96+31*288;WENN($AO$1=\"Frühes Mittelalter\";720*6+170*96+52*288;WENN($AO$1=\"Hochmittelalter\";1008*6+238*96+73*288;WENN($AO$1=\"Spätes Mittelalter\";1332*6+315*96+96*288;WENN($AO$1=\"Kolonialzeit\";1692*6+400*96+122*288;WENN($AO$1=\"Industriezeitalter\";1938*6+485*96+148*288;WENN($AO$1=\"Jahrhundertwende\";2278*6+570*96+174*288;WENN($AO$1=\"Die Moderne\";2652*6+663*96+203*288;WENN($AO$1=\"Die Postmoderne\";3026*6+757*96+231*288;WENN($AO$1=\"Gegenwart\";3400*6+850*96+260*288;WENN($AO$1=\"Morgen\";3808*6+952*96+291*288;WENN($AO$1=\"Die Zukunft\";4182*6+1046*96+320*288;WENN($AO$1=\"Arktische Zukunft\";4590*6+1148*96+351*288;WENN($AO$1=\"Ozeanische Zukunft\";5032*6+1258*96+385*288;WENN($AO$1=\"Virtuelle Zukunft\";5440*6+1360*96+416*288;WENN($AO$1=\"Raumfahrt: Mars\";8806*6+2202*96+673*288;WENN($AO$1=\"Raumfahrt: Asteroidengürtel\";9452*6+2363*96+723*288;WENN($AO$1=\"Raumfahrt: Venus\";10132*6+2533*96+775*288;WENN($AO$1=\"Raumfahrt: Jupitermond\";10778*6+2695*96+824*288;\"ERROR\"))))))))))))))))))))||=WENN($AO$1=\"Bronzezeit\";1*24;WENN($AO$1=\"Eisenzeit\";1*24;WENN($AO$1=\"Frühes Mittelalter\";1*24;WENN($AO$1=\"Hochmittelalter\";2*24;WENN($AO$1=\"Spätes Mittelalter\";2*24;WENN($AO$1=\"Kolonialzeit\";2*24;WENN($AO$1=\"Industriezeitalter\";3*24;WENN($AO$1=\"Jahrhundertwende\";3*24;WENN($AO$1=\"Die Moderne\";5*24;WENN($AO$1=\"Die Postmoderne\";6*24;WENN($AO$1=\"Gegenwart\";9*24;WENN($AO$1=\"Morgen\";12*24;WENN($AO$1=\"Die Zukunft\";15*24;WENN($AO$1=\"Arktische Zukunft\";18*24;WENN($AO$1=\"Ozeanische Zukunft\";20*24;WENN($AO$1=\"Virtuelle Zukunft\";24*24;WENN($AO$1=\"Raumfahrt: Mars\";30*24;WENN($AO$1=\"Raumfahrt: Asteroidengürtel\";35*24;WENN($AO$1=\"Raumfahrt: Venus\";40*24;WENN($AO$1=\"Raumfahrt: Jupitermond\";45*24;\"ERROR\"))))))))))))))))))))|||||=2||Produktion auf 24 Stunden gerechnet!|false|true"));
+				"Aviarium|Produktionsstätten|1x1|3|4|||6480|8|13|false|=WENN($AO$1=\"Bronzezeit\";76;WENN($AO$1=\"Eisenzeit\";163;WENN($AO$1=\"Frühes Mittelalter\";191;WENN($AO$1=\"Hochmittelalter\";253;WENN($AO$1=\"Spätes Mittelalter\";320;WENN($AO$1=\"Kolonialzeit\";377;WENN($AO$1=\"Industriezeitalter\";425;WENN($AO$1=\"Jahrhundertwende\";467;WENN($AO$1=\"Die Moderne\";519;WENN($AO$1=\"Die Postmoderne\";520;WENN($AO$1=\"Gegenwart\";665;WENN($AO$1=\"Morgen\";807;WENN($AO$1=\"Die Zukunft\";967;WENN($AO$1=\"Arktische Zukunft\";1024;WENN($AO$1=\"Ozeanische Zukunft\";1181;WENN($AO$1=\"Virtuelle Zukunft\";1411;WENN($AO$1=\"Raumfahrt: Mars\";2258;WENN($AO$1=\"Raumfahrt: Asteroidengürtel\";2454;WENN($AO$1=\"Raumfahrt: Venus\";2651;WENN($AO$1=\"Raumfahrt: Jupitermond\";2856;\"ERROR\"))))))))))))))))))))|=WENN($AO$1=\"Bronzezeit\";-50;WENN($AO$1=\"Eisenzeit\";-110;WENN($AO$1=\"Frühes Mittelalter\";-150;WENN($AO$1=\"Hochmittelalter\";-200;WENN($AO$1=\"Spätes Mittelalter\";-250;WENN($AO$1=\"Kolonialzeit\";-290;WENN($AO$1=\"Industriezeitalter\";-340;WENN($AO$1=\"Jahrhundertwende\";-380;WENN($AO$1=\"Die Moderne\";-420;WENN($AO$1=\"Die Postmoderne\";-460;WENN($AO$1=\"Gegenwart\";-500;WENN($AO$1=\"Morgen\";-540;WENN($AO$1=\"Die Zukunft\";-600;WENN($AO$1=\"Arktische Zukunft\";-640;WENN($AO$1=\"Ozeanische Zukunft\";-680;WENN($AO$1=\"Virtuelle Zukunft\";-720;WENN($AO$1=\"Raumfahrt: Mars\";-1090;WENN($AO$1=\"Raumfahrt: Asteroidengürtel\";-1150;WENN($AO$1=\"Raumfahrt: Venus\";-1200;WENN($AO$1=\"Raumfahrt: Jupitermond\";-1250;\"ERROR\"))))))))))))))))))))|||||=WENN($AO$1=\"Bronzezeit\";60;WENN($AO$1=\"Eisenzeit\";96;WENN($AO$1=\"Frühes Mittelalter\";240;WENN($AO$1=\"Hochmittelalter\";480;WENN($AO$1=\"Spätes Mittelalter\";720;WENN($AO$1=\"Kolonialzeit\";1200;WENN($AO$1=\"Industriezeitalter\";2400;WENN($AO$1=\"Jahrhundertwende\";3600;WENN($AO$1=\"Die Moderne\";6000;WENN($AO$1=\"Die Postmoderne\";9600;WENN($AO$1=\"Gegenwart\";14400;WENN($AO$1=\"Morgen\";24000;WENN($AO$1=\"Die Zukunft\";38400;WENN($AO$1=\"Arktische Zukunft\";57600;WENN($AO$1=\"Ozeanische Zukunft\";72000;WENN($AO$1=\"Virtuelle Zukunft\";96000;WENN($AO$1=\"Raumfahrt: Mars\";156000;WENN($AO$1=\"Raumfahrt: Asteroidengürtel\";216000;WENN($AO$1=\"Raumfahrt: Venus\";252000;WENN($AO$1=\"Raumfahrt: Jupitermond\";288000;\"ERROR\"))))))))))))))))))))|||=270*3|=13*288||=1*24|||||=2||Produktion auf 24 Stunden gerechnet!;Produktionsgebäude! Nur eine je Produktion gesetzt.|false|true"));
 		// PRoduces special military unit.
 		buildings.put(wikiUrl + "Fahnenwachen-Camp", Arrays.asList(
 				"Fahnenwachen-Camp|Militärgebäude|1x1|4|4|||2430|0|2|false||=-150|||||=640|||||||||||||1x Fahnenwache|false|true"));
@@ -433,22 +437,6 @@ public class WebsiteParser {
 
 								buildings.forEach(
 										b -> b.appendSpecialProduction("Produktion auf 24 Stunden gerechnet!"));
-
-								// TODO: Somehow mark or handle production buildings.
-								// Some buildings produce only supplies. Adding them is wrong, and even too long
-								// of a string.
-//								if (buildings.stream().anyMatch(b -> !"Produktionsstätten".equals(b.getType())
-//										&& !"Zikkurat".equals(b.getName()) && !"Strohhütte".equals(b.getName())
-//										&& !"Schrein der Inspiration".equals(b.getName())
-//										&& !"Schneekugel".equals(b.getName())
-//										&& !"Renaissance-Villa".equals(b.getName())
-//										&& !"Lebkuchenhaus".equals(b.getName())
-//										&& !"Königliches Marmortor".equals(b.getName()))) {
-//									throw new IllegalArgumentException(
-//											"Expected to be a production building: " + cell);
-//								}
-//								buildings.forEach(b -> b.setName(b.getName() + " PRODUCTION"));
-
 							} else if (cleanedCell.matches("[0-9]+ Std.")) {
 								double factor = 24. / parseInt(cleanedCell);
 								multFactor.put(spanningCol, multFactor.get(spanningCol) * factor);
@@ -786,20 +774,37 @@ public class WebsiteParser {
 					.setSuppliesPercent(buildFormulaString(lastAge, b.getSuppliesPercent(), parseInt(data), factor)));
 			break;
 		case "money":
-			buildings.forEach(b -> b
-					.setMoney(buildFormulaString(lastAge, b.getMoney(), parseInt(data.replace("Münzen", "")), factor)));
+			buildings.forEach(b -> {
+				if (!hasAlreadyProductionTypeEntry(b, WikiBuilding::getMoney)) {
+					b.setMoney(buildFormulaString(lastAge, b.getMoney(), parseInt(data.replace("Münzen", "")), factor));
+				} else {
+					b.appendSpecialProduction("Produktionsgebäude! Nur eine je Produktion gesetzt.");
+				}
+			});
 			break;
 		case "supplies":
-			buildings.forEach(b -> b.setSupplies(
-					buildFormulaString(lastAge, b.getSupplies(), parseInt(data.replace("Vorräte", "")), factor)));
+			buildings.forEach(b -> {
+				if (!hasAlreadyProductionTypeEntry(b, WikiBuilding::getSupplies)) {
+					b.setSupplies(buildFormulaString(lastAge, b.getSupplies(), parseInt(data.replace("Vorräte", "")),
+							factor));
+				} else {
+					b.appendSpecialProduction("Produktionsgebäude! Nur eine je Produktion gesetzt.");
+				}
+			});
 			break;
 		case "clan_power":
 			buildings.forEach(
 					b -> b.setGuildPower(buildFormulaString(lastAge, b.getGuildPower(), parseInt(data), factor)));
 			break;
 		case "medals":
-			buildings.forEach(b -> b.setMedals(
-					buildFormulaString(lastAge, b.getMedals(), parseInt(data.replace("Medaillen", "")), factor)));
+			buildings.forEach(b -> {
+				if (!hasAlreadyProductionTypeEntry(b, WikiBuilding::getMedals)) {
+					b.setMedals(buildFormulaString(lastAge, b.getMedals(), parseInt(data.replace("Medaillen", "")),
+							factor));
+				} else {
+					b.appendSpecialProduction("Produktionsgebäude! Nur eine je Produktion gesetzt.");
+				}
+			});
 			break;
 		case "blueprint":
 			buildings.forEach(b -> b.setBlueprints(
@@ -818,7 +823,6 @@ public class WebsiteParser {
 		case "random_good_of_age":
 		case "all_goods_of_previous_age":
 		case "random_good_of_previous_age":
-			// TODO: Save different age goods as own value?
 			if (data.startsWith("Gildenkasse: ")) {
 				buildings.forEach(b -> b.setGuildGoods(buildFormulaString(lastAge, b.getGuildGoods(),
 						parseInt(data.replace("Gildenkasse: ", "")), factor)));
@@ -889,6 +893,33 @@ public class WebsiteParser {
 		default:
 			throw new IllegalArgumentException("Unexpected type: " + dataType);
 		}
+	}
+
+	/**
+	 * Production type buildings have different production entries for different
+	 * durations. But in reality they only produce one at a time, unlike all other
+	 * production entries in the wiki.
+	 * 
+	 * Assuming it is only relevant for that kind of building type. And that this
+	 * method is called for all the relevant productions to decide further steps.
+	 * 
+	 * Can't really fit it into buildFormula method, since it only applies for a few
+	 * productions.
+	 * 
+	 * @param building            The building to check.
+	 * @param targetFormulaGetter The getter method of the attribute formula that is
+	 *                            currently checked.
+	 * @return True if the attribute already contains a production, otherwise false.
+	 */
+	private static boolean hasAlreadyProductionTypeEntry(WikiBuilding building,
+			Function<WikiBuilding, String> targetFormulaGetter) {
+		return "Produktionsstätten".equals(building.getType())
+		// Could check for factored productions. In case there is a passive production,
+		// and then the time based production, which I only want one of. But then the
+		// not-scaled 1 day production may be mistaken for passive production. So just
+		// check for any existing production.
+//				&& targetFormulaGetter.apply(building).matches("[0-9]+\\*[0-9]+");
+				&& !targetFormulaGetter.apply(building).isBlank();
 	}
 
 	// TODO: Move all the formula stuff in building class? Or even a new class?
