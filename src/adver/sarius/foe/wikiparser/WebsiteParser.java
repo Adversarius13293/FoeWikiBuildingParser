@@ -25,8 +25,7 @@ import adver.sarius.foe.building.WikiBuilding;
 public class WebsiteParser {
 
 	/** Used in the formulas to compare the age string against. */
-//	private static final String compareAgeTo = "$Z$1";
-	private static final String compareAgeTo = "$AO$1";
+	private static final String compareAgeTo = "$AZ$1";
 
 	/** Random object, currently used for the random waiting time. */
 	private static final Random random = new Random();
@@ -65,6 +64,7 @@ public class WebsiteParser {
 	// production" to store and display fragments?
 	// TODO: Mark Production buildings? Since they are not producing everything at
 	// once. Or is the building type indication enough?
+	// TODO: Reference between kit-producing building and its result building?
 	public static void main(String[] args) {
 		initAdditionalProperties();
 		var allBuildings = new ArrayList<WikiBuilding>();
@@ -639,18 +639,27 @@ public class WebsiteParser {
 								// TODO: Find a good generic solution.
 								// Currently ignoring the x value. Assuming the real production comes after it.
 								// Because sometimes it says like 4x4 FP, even though it is meant to be 4 FP.
-								if (cleanedSplit.matches("^[0-9]+%: [0-9]+x.*") && "forgepoints".equals(heading)) {
+								if (cleanedSplit.matches("^[0-9]+%: [0-9]+x [0-9]+.*")
+										&& ("forgepoints".equals(heading) || "blueprint_box".equals(heading))) {
 									int chance = parseInt(cleanedSplit.split(":")[0]);
 									filteredBuildings.forEach(
 											b -> b.appendSpecialProduction("Einberechnete Zufallsproduktion!"));
 									// TODO: Remove x split once bug report is implemented?
 									addProductionToBuildings(filteredBuildings, heading, cleanedSplit.split("x")[1],
 											multFactor.get(c) * (chance / 100.));
+								} else if (cleanedSplit.matches("^[0-9]+%: [0-9]+x .*")
+										&& ("small_forgepoints".equals(heading) || "medium_forgepoints".equals(heading)
+												|| "large_forgepoints".equals(heading))) {
+									int chance = parseInt(cleanedSplit.split(":")[0]);
+									filteredBuildings.forEach(
+											b -> b.appendSpecialProduction("Einberechnete Zufallsproduktion!"));
+									addProductionToBuildings(filteredBuildings, heading,
+											cleanedSplit.split(":")[1].split("x")[0],
+											multFactor.get(c) * (chance / 100.));
 								} else {
 									addProductionToBuildings(filteredBuildings, heading, cleanedSplit,
 											multFactor.get(c));
 								}
-
 							}
 						}
 					} else {
@@ -863,13 +872,14 @@ public class WebsiteParser {
 				}
 			});
 			break;
+		case "blueprint_box":
 		case "blueprint":
 			buildings.forEach(b -> b.setBlueprints(
 					// TODO: Remove regex replace once bug report is implemented?
 					buildFormulaString(lastAge, b.getBlueprints(),
 							parseInt(data.matches("[0-9]+x [0-9]+ Blaupause(n)?")
 									? data.replaceAll("Blaupause(n)?", "").replaceAll("^[0-9]+x ", "")
-									: data),
+									: data.replaceAll("Blaupause(n)?", "")),
 							factor)));
 			break;
 		case "premium":
@@ -902,6 +912,21 @@ public class WebsiteParser {
 			// For now as special production, since its only one building.
 			buildings.forEach(
 					b -> b.appendSpecialProduction(converDoubleToString(parseInt(data) * factor) + "% FP Bonus"));
+			break;
+		case "small_forgepoints":
+			buildings.forEach(
+					b -> b.setForgePoints(buildFormulaString(lastAge, b.getForgePoints(), parseInt(data) * 2, factor)));
+			buildings.forEach(b -> b.appendSpecialProduction("Einberechnetes FP-Paket"));
+			break;
+		case "medium_forgepoints":
+			buildings.forEach(
+					b -> b.setForgePoints(buildFormulaString(lastAge, b.getForgePoints(), parseInt(data) * 5, factor)));
+			buildings.forEach(b -> b.appendSpecialProduction("Einberechnetes FP-Paket"));
+			break;
+		case "large_forgepoints":
+			buildings.forEach(b -> b
+					.setForgePoints(buildFormulaString(lastAge, b.getForgePoints(), parseInt(data) * 10, factor)));
+			buildings.forEach(b -> b.appendSpecialProduction("Einberechnetes FP-Paket"));
 			break;
 		case "military":
 			// Sometimes can be written in a weird form.
