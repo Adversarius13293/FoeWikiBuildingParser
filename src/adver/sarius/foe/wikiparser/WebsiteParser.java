@@ -65,6 +65,7 @@ public class WebsiteParser {
 	// TODO: Mark Production buildings? Since they are not producing everything at
 	// once. Or is the building type indication enough?
 	// TODO: Reference between kit-producing building and its result building?
+	// TODO: Double values for Hippodrom parts? Since they apply to both ends
 	public static void main(String[] args) {
 		initAdditionalProperties();
 		var allBuildings = new ArrayList<WikiBuilding>();
@@ -85,7 +86,7 @@ public class WebsiteParser {
 				buildings.forEach(b -> System.out.println(temp + "|" + b.toString()));
 				allBuildings.addAll(buildings);
 			} catch (Exception ex) {
-				System.err.println(ex);
+				ex.printStackTrace();
 				System.out.println(i + "|Error when parsing building: " + buildingUrls.get(i));
 			}
 		}
@@ -167,7 +168,7 @@ public class WebsiteParser {
 				buildings = processBuildingWebSite(url);
 				buildings.forEach(WebsiteParser::simplifyBuildingFormulas);
 			} catch (Exception ex) {
-				System.err.println(ex);
+				ex.printStackTrace();
 				System.out.println("Error when parsing test-building: " + url);
 				System.exit(1);
 			}
@@ -298,7 +299,7 @@ public class WebsiteParser {
 	private static List<WikiBuilding> processBuildingWebSite(String buildingUrl) {
 		// Fetch the linked page for each building
 		String buildingHtmlContent = fetchHtmlContent(buildingUrl);
-		String buildingName = buildingHtmlContent.split("<span dir=\"auto\">")[1].split("</span>")[0];
+		String buildingName = buildingHtmlContent.split("<span class=\"mw-page-title-main\">")[1].split("</span>")[0];
 
 		// Some pages have a table just with the heading "Eigenschaften" followed
 		// directly by a new table with the data like size and street. While other pages
