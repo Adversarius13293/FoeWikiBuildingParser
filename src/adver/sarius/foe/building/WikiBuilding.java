@@ -25,6 +25,14 @@ public class WikiBuilding {
 	private String attackerDefense = "";
 	private String defenderAttack = "";
 	private String defenderDefense = "";
+	private String attackerAttackGG = "";
+	private String attackerDefenseGG = "";
+	private String defenderAttackGG = "";
+	private String defenderDefenseGG = "";
+	private String attackerAttackGEX = "";
+	private String attackerDefenseGEX = "";
+	private String defenderAttackGEX = "";
+	private String defenderDefenseGEX = "";
 	private String ranking = "";
 	private String moneyPercent = "";
 	private String suppliesPercent = "";
@@ -74,6 +82,14 @@ public class WikiBuilding {
 		this.attackerDefense = toClone.attackerDefense;
 		this.defenderAttack = toClone.defenderAttack;
 		this.defenderDefense = toClone.defenderDefense;
+		this.attackerAttackGG = toClone.attackerAttackGG;
+		this.attackerDefenseGG = toClone.attackerDefenseGG;
+		this.defenderAttackGG = toClone.defenderAttackGG;
+		this.defenderDefenseGG = toClone.defenderDefenseGG;
+		this.attackerAttackGEX = toClone.attackerAttackGEX;
+		this.attackerDefenseGEX = toClone.attackerDefenseGEX;
+		this.defenderAttackGEX = toClone.defenderAttackGEX;
+		this.defenderDefenseGEX = toClone.defenderDefenseGEX;
 		this.ranking = toClone.ranking;
 		this.moneyPercent = toClone.moneyPercent;
 		this.suppliesPercent = toClone.suppliesPercent;
@@ -233,6 +249,70 @@ public class WikiBuilding {
 		this.defenderDefense = defender_defense;
 	}
 
+	public String getAttackerAttackGG() {
+		return attackerAttackGG;
+	}
+
+	public void setAttackerAttackGG(String attackerAttackGG) {
+		this.attackerAttackGG = attackerAttackGG;
+	}
+
+	public String getAttackerDefenseGG() {
+		return attackerDefenseGG;
+	}
+
+	public void setAttackerDefenseGG(String attackerDefenseGG) {
+		this.attackerDefenseGG = attackerDefenseGG;
+	}
+
+	public String getDefenderAttackGG() {
+		return defenderAttackGG;
+	}
+
+	public void setDefenderAttackGG(String defenderAttackGG) {
+		this.defenderAttackGG = defenderAttackGG;
+	}
+
+	public String getDefenderDefenseGG() {
+		return defenderDefenseGG;
+	}
+
+	public void setDefenderDefenseGG(String defenderDefenseGG) {
+		this.defenderDefenseGG = defenderDefenseGG;
+	}
+
+	public String getAttackerAttackGEX() {
+		return attackerAttackGEX;
+	}
+
+	public void setAttackerAttackGEX(String attackerAttackGEX) {
+		this.attackerAttackGEX = attackerAttackGEX;
+	}
+
+	public String getAttackerDefenseGEX() {
+		return attackerDefenseGEX;
+	}
+
+	public void setAttackerDefenseGEX(String attackerDefenseGEX) {
+		this.attackerDefenseGEX = attackerDefenseGEX;
+	}
+
+	public String getDefenderAttackGEX() {
+		return defenderAttackGEX;
+	}
+
+	public void setDefenderAttackGEX(String defenderAttackGEX) {
+		this.defenderAttackGEX = defenderAttackGEX;
+	}
+
+	public String getDefenderDefenseGEX() {
+		return defenderDefenseGEX;
+	}
+
+	public void setDefenderDefenseGEX(String defenderDefenseGEX) {
+		this.defenderDefenseGEX = defenderDefenseGEX;
+	}
+
 	public String getRanking() {
 		return ranking;
 	}
@@ -388,7 +468,7 @@ public class WikiBuilding {
 	}
 
 	@Override
-	public String toString() {
+	public String toString() { // TODO: GG and GEX values
 		return name + "|" + type + "|" + street + "|" + height + "|" + width + "|" + buildTime + "|" + set + "|"
 				+ coins24 + "|" + gemsMin24 + "|" + gemsMax24 + "|" + needsStarting + "|" + happiness + "|" + population
 				+ "|" + attackerAttack + "|" + attackerDefense + "|" + defenderAttack + "|" + defenderDefense + "|"
