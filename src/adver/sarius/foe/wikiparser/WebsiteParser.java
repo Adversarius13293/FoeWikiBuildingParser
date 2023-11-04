@@ -422,7 +422,7 @@ public class WebsiteParser {
 		List<String> headings = new ArrayList<>();
 		headings.add("dummyIndex");
 		// Used for percentage and non-24 hour productions.
-		Map<Integer, Double> multFactor = new HashMap<>();
+		Map<Integer, Double> multFactors = new HashMap<>();
 
 		// Marks specific columns for specific amounts of set members. Key is the
 		// column.
@@ -473,8 +473,8 @@ public class WebsiteParser {
 							list.add(spanningCol, spanningCol);
 
 							// Initialize map.
-							if (!multFactor.containsKey(spanningCol)) {
-								multFactor.put(spanningCol, 1.);
+							if (!multFactors.containsKey(spanningCol)) {
+								multFactors.put(spanningCol, 1.);
 							}
 
 							// Evaluate content, to fill other lists.
@@ -512,25 +512,25 @@ public class WebsiteParser {
 								}
 							} else if (cleanedCell.matches("[0-9]+%")) {
 								// Production chance.
-								multFactor.put(spanningCol,
-										multFactor.get(spanningCol) * (parseInt(cleanedCell) / 100.));
+								multFactors.put(spanningCol,
+										multFactors.get(spanningCol) * (parseInt(cleanedCell) / 100.));
 								// TODO: Maybe not needed, and already covered by text heading later on?
 								buildings.forEach(b -> b.appendSpecialProduction("Einberechnete Zufallsproduktion!"));
 							} else if (cleanedCell.matches("[0-9]+ Min.")) {
 								// Different production times. Scale up to 24 hours.
 								double factor = 60. / parseInt(cleanedCell) * 24;
-								multFactor.put(spanningCol, multFactor.get(spanningCol) * factor);
+								multFactors.put(spanningCol, multFactors.get(spanningCol) * factor);
 
 								buildings.forEach(
 										b -> b.appendSpecialProduction("Produktion auf 24 Stunden gerechnet!"));
 							} else if (cleanedCell.matches("[0-9]+ Std.")) {
 								double factor = 24. / parseInt(cleanedCell);
-								multFactor.put(spanningCol, multFactor.get(spanningCol) * factor);
+								multFactors.put(spanningCol, multFactors.get(spanningCol) * factor);
 								buildings.forEach(
 										b -> b.appendSpecialProduction("Produktion auf 24 Stunden gerechnet!"));
 							} else if (cleanedCell.matches("[0-9]+ T.")) {
 								double factor = 1. / parseInt(cleanedCell);
-								multFactor.put(spanningCol, multFactor.get(spanningCol) * factor);
+								multFactors.put(spanningCol, multFactors.get(spanningCol) * factor);
 								if (!"1 T.".equals(cleanedCell)) {
 									buildings.forEach(
 											b -> b.appendSpecialProduction("Produktion auf 24 Stunden gerechnet!"));
@@ -639,14 +639,14 @@ public class WebsiteParser {
 					// Some cells contain multiple lines and bonuses.
 					if ("Boosts".equals(heading) || "1 T. Produktion".equals(heading) || "Liefert".equals(heading)
 							|| "Bedürfnisse".equals(heading)) {
-						addProductionFromData(filteredBuildings, heading, productionCells[c], multFactor.get(c));
+						addProductionFromData(filteredBuildings, heading, productionCells[c], multFactors.get(c));
 					} else {
 						// Probably could run everything through the upper part. But then cells with
 						// proper heading and images in cell would only take the image as heading. Not
 						// quite sure if every image is only used for exactly one effect. Especially in
 						// the first table with building time and stuff.
 						addProductionToBuildings(filteredBuildings, heading, cleanHtmlSplit(productionCells[c]),
-								multFactor.get(c));
+								multFactors.get(c));
 					}
 				}
 				if ((headings.size()) != c) {
