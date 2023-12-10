@@ -468,12 +468,14 @@ public class WikiBuilding {
 	}
 
 	@Override
-	public String toString() { // TODO: GG and GEX values
+	public String toString() {
 		return name + "|" + type + "|" + street + "|" + height + "|" + width + "|" + buildTime + "|" + set + "|"
 				+ coins24 + "|" + gemsMin24 + "|" + gemsMax24 + "|" + needsStarting + "|" + happiness + "|" + population
 				+ "|" + attackerAttack + "|" + attackerDefense + "|" + defenderAttack + "|" + defenderDefense + "|"
-				+ ranking + "|" + moneyPercent + "|" + suppliesPercent + "|" + money + "|" + supplies + "|" + guildPower
-				+ "|" + medals + "|" + goods + "|" + guildGoods + "|" + blueprints + "|" + diamonds + "|" + forgePoints
-				+ "|" + units + "|" + specialProduction + "|" + upgradeable + "|" + maxSetMembers;
+				+ attackerAttackGG + "|" + attackerDefenseGG + "|" + defenderAttackGG + "|" + defenderDefenseGG + "|"
+				+ attackerAttackGEX + "|" + attackerDefenseGEX + "|" + defenderAttackGEX + "|" + defenderDefenseGEX
+				+ "|" + ranking + "|" + moneyPercent + "|" + suppliesPercent + "|" + money + "|" + supplies + "|"
+				+ guildPower + "|" + medals + "|" + goods + "|" + guildGoods + "|" + blueprints + "|" + diamonds + "|"
+				+ forgePoints + "|" + units + "|" + specialProduction + "|" + upgradeable + "|" + maxSetMembers;
 	}
 }
