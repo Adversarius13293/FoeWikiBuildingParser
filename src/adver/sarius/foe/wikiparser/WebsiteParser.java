@@ -71,6 +71,7 @@ public class WebsiteParser {
 	// split into 2 buildings.
 	// TODO: Apfelwein-Garten produces different numbers of random units in last
 	// age. Which leads to double entries in special production.
+	// TODO: Fix production buildings output.
 	public static void main(String[] args) {
 		initAdditionalProperties();
 		var allBuildings = new ArrayList<WikiBuilding>();
@@ -81,8 +82,6 @@ public class WebsiteParser {
 		buildingUrls.addAll(getBuildingUrls(specialBuildingsPage));
 		buildingUrls.addAll(getBuildingUrls(special2BuildingsPage));
 		buildingUrls.addAll(getBuildingUrls(limitedBuildingsPage));
-		// TODO: Still need fixing
-//		buildingUrls.add(wikiUrl + "Hüpf-Kürbis");
 
 		for (int i = 0; i < buildingUrls.size(); i++) {
 			try {
@@ -488,6 +487,39 @@ public class WebsiteParser {
 
 							// Evaluate content, to fill other lists.
 							String cleanedCell = cleanHtmlSplit(cell);
+
+							// Different formats of production buildings. Try to change it to the initial
+							// format.
+							// Old: Medizinmann
+							// New: Hüpf-Kürbis
+							// Assuming a lot here...
+							if (cell.contains("<img ") && cell.contains("icons/time")
+									&& cleanedCell.matches("[0-9]+ [a-zA-Z]{3}[.] Produktion")) {
+								cleanedCell = cleanedCell.replace(" Produktion", "");
+								// In contrast to old production, this does not have the type in headings.
+								if (headings.size() <= spanningCol) {
+									if (headings.size() != spanningCol) {
+										throw new IllegalArgumentException(
+												"Unexpected order of headings: " + spanningCol);
+									}
+									headings.add("DummyProd");
+								}
+							} else if (cell.contains("<img ") && cell.contains("icons/time")
+									&& cleanedCell.matches("1 T. Produktion") && buildings.get(0).getSpecialProduction()
+											.contains("Produktion auf 24 Stunden gerechnet!")) {
+								// Assuming previous production times already marked it. Because 1 day
+								// production is normal for most other buildings.
+								cleanedCell = cleanedCell.replace(" Produktion", "");
+								// In contrast to old production, this does not have the type in headings.
+								if (headings.size() <= spanningCol) {
+									if (headings.size() != spanningCol) {
+										throw new IllegalArgumentException(
+												"Unexpected order of headings: " + spanningCol);
+									}
+									headings.add("DummyProd");
+								}
+							}
+
 							if (cell.contains("<img ") && cleanedCell.matches("[0-9]+ x")) {
 								// Assuming image + this text means set-production.
 								if (setProduction.containsKey(spanningCol)) {
@@ -647,7 +679,7 @@ public class WebsiteParser {
 
 					// Some cells contain multiple lines and bonuses.
 					if ("Boosts".equals(heading) || "1 T. Produktion".equals(heading) || "Liefert".equals(heading)
-							|| "Bedürfnisse".equals(heading)) {
+							|| "Bedürfnisse".equals(heading) || "DummyProd".equals(heading)) {
 						addProductionFromData(filteredBuildings, heading, productionCells[c], multFactors.get(c));
 					} else {
 						// Probably could run everything through the upper part. But then cells with
